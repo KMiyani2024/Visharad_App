@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Search, ChevronRight, FileQuestion, Home } from 'lucide-react';
+import { X, Search, ChevronRight, FileQuestion, Home, Lock } from 'lucide-react';
 import { DharmaFlag } from './DharmaFlag';
 import { ProgressRing } from './ProgressRing';
 import { useClassProgress } from '@/lib/useClassProgress';
@@ -151,6 +151,18 @@ export function Sidebar({ classes, onLinkClick, onClose }: SidebarProps) {
                     />
                 ))}
             </nav>
+
+            {/* Admin entry point — kept small/muted since it's not for regular visitors */}
+            <div className="p-3 border-t border-white/10 shrink-0">
+                <Link
+                    href="/admin"
+                    onClick={onLinkClick}
+                    className="flex items-center gap-2 px-2.5 py-2 text-xs font-medium text-charcoal-500 hover:text-charcoal-200 hover:bg-white/5 rounded-lg transition-all"
+                >
+                    <Lock size={13} />
+                    Admin
+                </Link>
+            </div>
         </aside>
     );
 }

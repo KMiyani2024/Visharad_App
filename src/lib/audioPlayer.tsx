@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { trackEvent } from './analytics';
 
 export type Track = {
     url: string;
@@ -63,10 +64,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     const playTrack = (track: Track) => {
         if (currentTrack?.url === track.url) {
-            setIsPlaying((p) => !p);
+            setIsPlaying((p) => {
+                const next = !p;
+                if (next) trackEvent('audio_play', { reference: track.reference, classId: track.classId });
+                return next;
+            });
         } else {
             setCurrentTrack(track);
             setIsPlaying(true);
+            trackEvent('audio_play', { reference: track.reference, classId: track.classId });
         }
     };
 
@@ -112,7 +118,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
                     setDuration(e.currentTarget.duration);
                 }}
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                onEnded={() => setIsPlaying(false)}
+                onEnded={() => {
+                    setIsPlaying(false);
+                    if (currentTrack) {
+                        trackEvent('audio_complete', { reference: currentTrack.reference, classId: currentTrack.classId });
+                    }
+                }}
             />
         </AudioPlayerContext.Provider>
     );

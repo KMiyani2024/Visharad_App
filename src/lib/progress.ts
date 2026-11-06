@@ -1,6 +1,8 @@
 // Per-class study progress, tracked client-side in localStorage (no backend/auth exists).
 // Read progress = shlok pages the user has visited; quiz progress = the class quiz completed once.
 
+import { trackEvent } from './analytics';
+
 const STORAGE_KEY = 'visharad_progress_v1';
 export const PROGRESS_EVENT = 'visharad-progress-updated';
 
@@ -32,6 +34,7 @@ export function markShlokRead(classId: string, shlokNumber: number) {
     if (!entry.shloks.includes(shlokNumber)) {
         store[classId] = { ...entry, shloks: [...entry.shloks, shlokNumber] };
         writeStore(store);
+        trackEvent('shlok_read', { classId, shlokNumber });
     }
 }
 

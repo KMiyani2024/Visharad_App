@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { CheckCircle, XCircle, ArrowRight, RefreshCw, AlertCircle } from "lucide-react";
 import { markQuizDone } from "@/lib/progress";
+import { trackEvent } from "@/lib/analytics";
 
 // Draw-in checkmark / shaking X used for the per-question feedback panel.
 function FeedbackIcon({ correct }: { correct: boolean }) {
@@ -283,6 +284,12 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
             if (type === 'class_quiz') {
                 markQuizDone(classId);
             }
+            trackEvent('quiz_complete', {
+                classId,
+                quizType: type,
+                score: calculateScore(),
+                total: quizData.questions.length,
+            });
         }
     };
 

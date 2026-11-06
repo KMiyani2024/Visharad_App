@@ -9,6 +9,7 @@ import { DharmaFlag } from './DharmaFlag';
 import { ReadingModeProvider, useReadingMode } from '@/lib/readingMode';
 import { AudioPlayerProvider } from '@/lib/audioPlayer';
 import { NowPlayingBar } from './NowPlayingBar';
+import { trackEvent } from '@/lib/analytics';
 
 type MainLayoutProps = {
     classes: {
@@ -39,6 +40,10 @@ function MainLayoutInner({ classes, children }: MainLayoutProps) {
     // Close the mobile drawer automatically on route changes
     useEffect(() => {
         closeMenu();
+    }, [pathname]);
+
+    useEffect(() => {
+        trackEvent('page_view', { path: pathname });
     }, [pathname]);
 
     return (

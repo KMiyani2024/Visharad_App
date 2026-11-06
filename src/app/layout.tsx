@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Analytics } from "@vercel/analytics/next";
 import { Inter, Manrope, Noto_Serif_Devanagari, Noto_Sans_Gujarati } from 'next/font/google';
 import './globals.css';
 import { MainLayout } from '@/components/MainLayout';
@@ -46,7 +45,6 @@ export default async function RootLayout({
           {children}
         </MainLayout>
         <FeedbackButton />
-        <Analytics />
       </body>
     </html>
   );
