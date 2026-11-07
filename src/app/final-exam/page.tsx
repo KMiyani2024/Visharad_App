@@ -4,7 +4,6 @@ import {
     ArrowRight,
     Ban,
     BookOpen,
-    ExternalLink,
     FileText,
     GraduationCap,
     Mic,
@@ -23,7 +22,7 @@ import {
     paperMarks,
     type ExamPaper,
 } from '@/lib/finalExam';
-import { isPdfAvailable } from '@/lib/finalExamPdf';
+import { areFilesConfigured } from '@/lib/finalExamFiles';
 import { TopicChecklist } from '@/components/final-exam/TopicChecklist';
 
 export const metadata: Metadata = {
@@ -31,7 +30,7 @@ export const metadata: Metadata = {
     description: 'The Visharad Final Exam: four papers, 100 marks — what to revise and how each paper is marked.',
 };
 
-// PDF links depend on FINAL_EXAM_SAS_URL, read at request time.
+// Booklet links depend on FINAL_EXAM_SAS_URL, read at request time.
 export const dynamic = 'force-dynamic';
 
 // Static class names per paper (Tailwind needs them spelled out).
@@ -63,6 +62,7 @@ export default async function FinalExamPage() {
     const firstShlok = classes[0]?.shloks[0];
     const studyHref = firstShlok ? shlokHref.get(firstShlok) ?? '/' : '/';
 
+    const filesReady = areFilesConfigured();
     const mukhpathMarks = EXAM_PAPERS.filter((p) => p.section === 'Mukhpath').reduce((s, p) => s + paperMarks(p), 0);
     const presentationMarks = FINAL_EXAM_TOTAL - mukhpathMarks;
 
@@ -146,7 +146,6 @@ export default async function FinalExamPage() {
             {EXAM_PAPERS.map((p) => {
                 const tone = TONE[p.number];
                 const TypeIcon = typeIcon(p.type);
-                const pdfReady = isPdfAvailable(p);
 
                 return (
                     <article
@@ -190,23 +189,32 @@ export default async function FinalExamPage() {
                             {/* Booklet + PDF */}
                             <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-charcoal-100 bg-charcoal-50/60 px-4 py-3">
                                 <FileText size={20} className="shrink-0 text-charcoal-400" />
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-1 basis-56">
                                     <div className="text-[11px] font-semibold uppercase tracking-wider text-charcoal-400">Booklet</div>
                                     <div className="text-sm font-semibold text-charcoal-800">{p.document}</div>
                                 </div>
-                                {pdfReady ? (
-                                    <a
-                                        href={`/final-exam/pdf/${p.key}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 rounded-full bg-saffron-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-saffron-600 transition-colors"
-                                    >
-                                        Open PDF
-                                        <ExternalLink size={14} />
-                                    </a>
+                                {filesReady ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {p.files.map((f, i) => (
+                                            <Link
+                                                key={f.lang}
+                                                href={`/final-exam/read/${p.key}/${f.lang}`}
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors ${i === 0
+                                                    ? 'bg-saffron-500 text-white shadow-sm hover:bg-saffron-600'
+                                                    : 'border border-charcoal-200 bg-card text-charcoal-700 hover:bg-charcoal-50'
+                                                    }`}
+                                            >
+                                                <BookOpen size={14} />
+                                                <span className={f.lang === 'gu' ? 'font-gujarati' : undefined}>{f.label}</span>
+                                                <span className={i === 0 ? 'text-white/80' : 'text-charcoal-400'}>
+                                                    {f.format === 'pdf' ? 'PDF' : 'Word'}
+                                                </span>
+                                            </Link>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <span className="rounded-full border border-dashed border-charcoal-300 px-3 py-1.5 text-xs font-medium text-charcoal-500">
-                                        PDF coming soon
+                                        Booklet coming soon
                                     </span>
                                 )}
                             </div>

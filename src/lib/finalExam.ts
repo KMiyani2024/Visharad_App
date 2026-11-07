@@ -1,7 +1,18 @@
 // The Visharad Final Exam: four papers, 100 marks (40 Mukhpath + 60 Presentation).
-// Content as supplied by the Pathshala. The PDFs live in Azure Blob storage; see finalExamPdf.ts.
+// Content as supplied by the Pathshala. The booklets live in Azure Blob storage
+// (storage account `examfinal`, container `documents`); see finalExamFiles.ts.
 
 export type PaperKey = 'mukhpath' | 'shlok-explanations' | 'subject-explanations' | 'faq';
+
+/** One downloadable booklet: a blob in the final-exam container. */
+export type ExamFile = {
+    lang: 'en' | 'gu';
+    /** Button label. */
+    label: string;
+    /** Blob name inside the container (exactly as stored). */
+    blob: string;
+    format: 'pdf' | 'docx';
+};
 
 export type ExamPaper = {
     key: PaperKey;
@@ -17,12 +28,8 @@ export type ExamPaper = {
     revise: string;
     assessed: string;
     marks: { count: number; unit: string; each: number };
-    /**
-     * Blob name of this paper's PDF inside the final-exam container
-     * (the container itself comes from the FINAL_EXAM_SAS_URL env var).
-     * null until the file name is confirmed — the page then shows "PDF coming soon".
-     */
-    pdf: string | null;
+    /** The booklet(s) for this paper, served via /final-exam/files/<paper>/<lang>. */
+    files: ExamFile[];
 };
 
 export const FINAL_EXAM_TOTAL = 100;
@@ -73,7 +80,10 @@ export const EXAM_PAPERS: ExamPaper[] = [
         revise: 'Every vachan from this booklet in Gujarati.',
         assessed: 'Recitation of 20 vachans drawn from the booklet.',
         marks: { count: 20, unit: 'vachans', each: 2 },
-        pdf: null,
+        files: [
+            { lang: 'en', label: 'English', blob: 'Satsang Diksha Visharad Selected Mukhpath_English.pdf', format: 'pdf' },
+            { lang: 'gu', label: 'ગુજરાતી', blob: 'Satsang Diksha Visharad Selected Mukhpath_Gujarati.pdf', format: 'pdf' },
+        ],
     },
     {
         key: 'shlok-explanations',
@@ -87,7 +97,9 @@ export const EXAM_PAPERS: ExamPaper[] = [
         revise: 'The Gujarati meaning given for each shlok, plus its “Mukhpath references” and “special confirmation” quotes, across Units 1–4.',
         assessed: "4 shlok explanations, given in the student's own words and supported by the scriptural references.",
         marks: { count: 4, unit: 'shlok explanations', each: 5 },
-        pdf: null,
+        files: [
+            { lang: 'gu', label: 'ગુજરાતી', blob: 'Shloka Samjuti Gujarati.docx', format: 'docx' },
+        ],
     },
     {
         key: 'subject-explanations',
@@ -101,7 +113,10 @@ export const EXAM_PAPERS: ExamPaper[] = [
         revise: 'All 17 topics (listed below).',
         assessed: '2 subject explanations, drawn from any of the 17 topics.',
         marks: { count: 2, unit: 'subject explanations', each: 10 },
-        pdf: null,
+        files: [
+            { lang: 'en', label: 'English', blob: 'Copy of Vishay Prastuti 1-17.pdf', format: 'pdf' },
+            { lang: 'gu', label: 'ગુજરાતી', blob: 'Copy of વિષયપ્રસ્તુતિ ૧-૧૭.pdf', format: 'pdf' },
+        ],
     },
     {
         key: 'faq',
@@ -115,7 +130,9 @@ export const EXAM_PAPERS: ExamPaper[] = [
         revise: 'Every Q&A pair in the FAQ booklet, each tied to the shlok it relates to.',
         assessed: '2 FAQ answers, in the student’s own words supported by the scriptural references given.',
         marks: { count: 2, unit: 'FAQ answers', each: 10 },
-        pdf: null,
+        files: [
+            { lang: 'en', label: 'English', blob: 'FAQ_ENGLISH.pdf', format: 'pdf' },
+        ],
     },
 ];
 
