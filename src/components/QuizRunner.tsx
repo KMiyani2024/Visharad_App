@@ -9,7 +9,7 @@ import { markQuizDone } from "@/lib/progress";
 function FeedbackIcon({ correct }: { correct: boolean }) {
     return (
         <motion.div
-            className={correct ? 'text-emerald-600' : 'text-red-600'}
+            className={correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
             animate={!correct ? { x: [0, -6, 6, -4, 4, -2, 2, 0] } : undefined}
             transition={!correct ? { duration: 0.45, delay: 0.15 } : undefined}
         >
@@ -309,7 +309,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                     <div className="h-2 w-1/4 rounded-full bg-shimmer" />
                 </div>
 
-                <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-charcoal-100 mb-8">
+                <div className="bg-card p-6 sm:p-8 rounded-3xl shadow-xl border border-charcoal-100 mb-8">
                     <div className="h-6 w-3/4 rounded bg-shimmer mb-3" />
                     <div className="h-6 w-1/2 rounded bg-shimmer mb-8" />
 
@@ -330,7 +330,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
     if (error) {
         return (
             <div className="max-w-4xl mx-auto p-6 text-center">
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-8 rounded-2xl relative mb-6">
+                <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-300 px-4 py-8 rounded-2xl relative mb-6">
                     <AlertCircle size={48} className="mx-auto mb-4 text-red-600" />
                     <h3 className="text-lg font-bold">Failed to load quiz</h3>
                     <p className="mt-2">{error}</p>
@@ -352,8 +352,8 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                 transition={{ duration: 0.4 }}
                 className="max-w-3xl mx-auto p-4 sm:p-6"
             >
-                <div className="bg-white rounded-3xl shadow-xl border border-charcoal-100 overflow-hidden mb-8">
-                    <div className="relative p-8 text-center border-b border-charcoal-100 bg-gradient-to-b from-saffron-50/60 to-white overflow-hidden">
+                <div className="bg-card rounded-3xl shadow-xl border border-charcoal-100 overflow-hidden mb-8">
+                    <div className="relative p-8 text-center border-b border-charcoal-100 bg-gradient-to-b from-saffron-50/60 to-card overflow-hidden">
                         {percentage >= 80 && <ConfettiBurst />}
                         <h2 className="text-3xl font-display font-bold mb-2 text-charcoal-900">Quiz Completed!</h2>
                         <div className="text-6xl font-display font-extrabold text-saffron-600 mb-2">
@@ -371,7 +371,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                             </div>
                         ) : (
                             incorrectQuestions.map((q) => (
-                                <div key={q.id} className="p-4 rounded-2xl border border-red-200 bg-red-50/60">
+                                <div key={q.id} className="p-4 rounded-2xl border border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/30">
                                     <div className="flex gap-3 mb-2">
                                         <h3 className="font-medium text-lg text-charcoal-800">{q.question_text}</h3>
                                     </div>
@@ -379,14 +379,14 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                                         <div className="flex items-center gap-2">
                                             <XCircle size={16} className="text-red-600 shrink-0" />
                                             <span className="font-semibold text-charcoal-600">You selected:</span>
-                                            <span className="text-red-700 font-medium">{userAnswers[q.id] || "Skipped"}</span>
+                                            <span className="text-red-700 dark:text-red-300 font-medium">{userAnswers[q.id] || "Skipped"}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <CheckCircle size={16} className="text-emerald-600 shrink-0" />
                                             <span className="font-semibold text-charcoal-600">Correct:</span>
-                                            <span className="text-emerald-700 font-medium">{q.correct_answer}</span>
+                                            <span className="text-emerald-700 dark:text-emerald-300 font-medium">{q.correct_answer}</span>
                                         </div>
-                                        <div className="mt-2 pt-2 border-t border-red-200/50">
+                                        <div className="mt-2 pt-2 border-t border-red-200/50 dark:border-red-900/60">
                                             <p className="text-charcoal-700 text-sm">
                                                 <span className="font-bold">Reason:</span> {q.explanation}
                                             </p>
@@ -400,7 +400,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                     <div className="p-6 bg-charcoal-50 flex flex-col sm:flex-row justify-center gap-4">
                         <button
                             onClick={handleTakeAgain}
-                            className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-charcoal-200 text-charcoal-700 rounded-full font-bold hover:bg-charcoal-50 hover:border-charcoal-300 hover:scale-105 hover:shadow-md transition-all"
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-card border border-charcoal-200 text-charcoal-700 rounded-full font-bold hover:bg-charcoal-50 hover:border-charcoal-300 hover:scale-105 hover:shadow-md transition-all"
                         >
                             <RefreshCw size={18} /> Take Another Quiz
                         </button>
@@ -447,7 +447,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -24 }}
                         transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className="relative overflow-hidden bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-charcoal-100 mb-8"
+                        className="relative overflow-hidden bg-card p-6 sm:p-8 rounded-3xl shadow-xl border border-charcoal-100 mb-8"
                     >
                         {/* Quick color flash on submit */}
                         <AnimatePresence>
@@ -475,9 +475,9 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
 
                                 if (isSubmitted) {
                                     if (opt === question.correct_answer) {
-                                        optionClass += 'border-emerald-500 bg-emerald-50 ';
+                                        optionClass += 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 ';
                                     } else if (isWrongSelected) {
-                                        optionClass += 'border-red-500 bg-red-50 ';
+                                        optionClass += 'border-red-500 bg-red-50 dark:bg-red-950/40 ';
                                     } else {
                                         optionClass += 'border-charcoal-100 opacity-50 ';
                                     }
@@ -485,7 +485,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                                     if (userAnswers[question.id] === opt) {
                                         optionClass += 'border-saffron-500 bg-saffron-50 cursor-pointer ';
                                     } else {
-                                        optionClass += 'border-charcoal-150 border-charcoal-200 hover:border-saffron-300 hover:bg-saffron-50/40 cursor-pointer ';
+                                        optionClass += 'border-charcoal-200 hover:border-saffron-300 hover:bg-saffron-50/40 cursor-pointer ';
                                     }
                                 }
 
@@ -528,13 +528,13 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                                     transition={{ duration: 0.25 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className={`mt-6 p-4 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                                    <div className={`mt-6 p-4 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800' : 'bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800'}`}>
                                         <div className="flex items-center gap-2 mb-2">
                                             <FeedbackIcon correct={isCorrect} />
                                             {isCorrect ? (
-                                                <h3 className="font-bold text-emerald-800">Correct!</h3>
+                                                <h3 className="font-bold text-emerald-800 dark:text-emerald-300">Correct!</h3>
                                             ) : (
-                                                <h3 className="font-bold text-red-800">Incorrect</h3>
+                                                <h3 className="font-bold text-red-800 dark:text-red-300">Incorrect</h3>
                                             )}
                                         </div>
                                         <p className="text-charcoal-700">
@@ -559,7 +559,7 @@ export function QuizRunner({ classId, type, title, nextClassPath }: QuizRunnerPr
                             disabled={!userAnswers[question.id]}
                             className={`flex items-center gap-2 px-8 py-4 rounded-full font-bold text-lg transition-all ${!userAnswers[question.id]
                                 ? 'bg-charcoal-200 text-charcoal-400 cursor-not-allowed'
-                                : 'bg-charcoal-900 text-white hover:bg-charcoal-800 shadow-lg shadow-charcoal-900/20 hover:scale-105'
+                                : 'bg-charcoal-900 text-background hover:bg-charcoal-800 shadow-lg shadow-black/20 hover:scale-105'
                                 }`}
                         >
                             Submit Answer

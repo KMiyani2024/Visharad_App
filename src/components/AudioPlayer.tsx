@@ -36,7 +36,7 @@ export function AudioPlayer({ reference, displayRef, classId }: AudioPlayerProps
                 onClick={() => playTrack({ url: audioUrl, displayRef: displayRef || reference, reference, classId })}
                 className={`shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all hover:scale-105 ${isActivePlaying
                     ? 'bg-saffron-500 text-white'
-                    : 'bg-white text-saffron-600 border border-saffron-200 hover:bg-saffron-50'
+                    : 'bg-card text-saffron-600 border border-saffron-200 hover:bg-saffron-50'
                     }`}
                 aria-label={isActivePlaying ? 'Pause' : 'Play'}
             >

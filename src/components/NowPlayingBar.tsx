@@ -18,7 +18,7 @@ export function NowPlayingBar() {
                     animate={{ y: 0, opacity: 1, scale: 1 }}
                     exit={{ y: 20, opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="fixed bottom-4 right-4 md:right-8 z-50 w-[calc(100%-2rem)] max-w-sm"
+                    className="scale-fixed fixed bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] md:bottom-4 right-4 md:right-8 z-50 w-[calc(100%-2rem)] max-w-sm"
                 >
                     <div className="bg-charcoal-900 text-white rounded-2xl shadow-2xl shadow-black/30 border border-white/10 overflow-hidden">
                         {/* Scrub bar */}

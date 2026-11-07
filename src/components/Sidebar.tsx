@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Search, ChevronRight, FileQuestion, Home } from 'lucide-react';
-import { DharmaFlag } from './DharmaFlag';
+import { X, Search, ChevronRight, FileQuestion, Library } from 'lucide-react';
 import { ProgressRing } from './ProgressRing';
+import { PathshalaSeal } from './nav/PathshalaSeal';
 import { useClassProgress } from '@/lib/useClassProgress';
 
 type ClassMeta = {
@@ -70,26 +70,26 @@ export function Sidebar({ classes, onLinkClick, onClose }: SidebarProps) {
     const isSearching = !!searchTerm.trim();
 
     return (
-        <aside className="h-full flex flex-col bg-charcoal-900 text-charcoal-200">
+        <aside className="h-full flex flex-col bg-card md:bg-card/60 border-r border-charcoal-200/70 text-charcoal-700">
             {/* Header */}
-            <div className="p-4 border-b border-white/10 space-y-3 shrink-0">
-                <div className="flex items-center justify-between">
+            <div className="p-4 border-b border-charcoal-200/70 space-y-3 shrink-0">
+                {/* Drawer title (phones only — on md+ the top bar carries the brand) */}
+                <div className="flex items-center justify-between md:hidden">
                     <Link
                         href="/"
                         onClick={onLinkClick}
                         className="flex items-center gap-2.5 group"
                     >
-                        <DharmaFlag className="w-4 h-6 shrink-0" />
-                        <span className="text-lg font-display font-bold text-white tracking-tight group-hover:text-saffron-300 transition-colors">
+                        <PathshalaSeal size={30} />
+                        <span className="text-base font-display font-bold text-charcoal-900 tracking-tight group-hover:text-saffron-600 transition-colors">
                             Visharad Sahayak
                         </span>
                     </Link>
-                    {/* Mobile Close Button */}
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-md text-charcoal-400 hover:text-white hover:bg-white/10 hover:scale-105 md:hidden transition-all"
-                            aria-label="Close sidebar"
+                            className="p-1.5 rounded-md text-charcoal-500 hover:text-charcoal-900 hover:bg-charcoal-100 transition-all"
+                            aria-label="Close class list"
                         >
                             <X size={20} />
                         </button>
@@ -102,35 +102,22 @@ export function Sidebar({ classes, onLinkClick, onClose }: SidebarProps) {
                     <input
                         type="text"
                         placeholder="Search Shlok, Class, Quiz..."
+                        aria-label="Search shloks, classes and quizzes"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 focus:bg-white/10 focus:border-saffron-500/50 rounded-lg text-sm text-white placeholder-charcoal-400 outline-none transition-all"
+                        className="w-full pl-9 pr-3 py-2 bg-charcoal-50 border border-charcoal-200 focus:bg-card focus:border-saffron-400 focus:ring-2 focus:ring-saffron-500/15 rounded-lg text-sm text-charcoal-900 placeholder-charcoal-400 outline-none transition-all"
                     />
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
+            <nav aria-label="Classes" className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
                 {!isSearching && (
-                    <Link
-                        href="/"
-                        onClick={onLinkClick}
-                        className={`
-                            relative group/nav flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all mb-3
-                            ${pathname === '/'
-                                ? 'bg-saffron-500/15 text-saffron-300'
-                                : 'text-charcoal-300 hover:bg-white/5 hover:text-white'
-                            }
-                        `}
-                    >
-                        <span
-                            aria-hidden="true"
-                            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-400 transition-all duration-200 ease-out ${pathname === '/' ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'
-                                }`}
-                        />
-                        <Home size={15} />
-                        Home
-                    </Link>
+                    <div className="flex items-center gap-1.5 px-2.5 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-charcoal-400">
+                        <Library size={13} />
+                        Classes
+                        <span className="ml-auto font-medium normal-case tracking-normal">{classes.length}</span>
+                    </div>
                 )}
 
                 {displayClasses.length === 0 && (
@@ -178,7 +165,7 @@ function ClassNavItem({
         <div className="group">
             <button
                 onClick={onToggle}
-                className="w-full flex items-center justify-between px-2.5 py-2 text-left text-charcoal-100 text-sm font-semibold hover:bg-white/5 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between px-2.5 py-2 text-left text-charcoal-800 text-sm font-semibold hover:bg-charcoal-100 rounded-lg transition-colors"
                 title={`${Math.round(progress * 100)}% complete`}
             >
                 <span>{cls.label}</span>
@@ -186,7 +173,7 @@ function ClassNavItem({
                     <ProgressRing progress={progress} />
                     <ChevronRight
                         size={14}
-                        className={`text-charcoal-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                        className={`text-charcoal-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
                     />
                 </div>
             </button>
@@ -200,7 +187,7 @@ function ClassNavItem({
                         transition={{ duration: 0.2, ease: 'easeOut' }}
                         className="overflow-hidden"
                     >
-                        <div className="mt-1 mb-2 ml-4 space-y-0.5 border-l border-white/10 pl-3">
+                        <div className="mt-1 mb-2 ml-4 space-y-0.5 border-l border-charcoal-200 pl-3">
                             {cls.shloks.map((shlokNum) => {
                                 const href = `/class/${classId}/shlok/${shlokNum}`;
                                 const isActive = pathname === href;
@@ -218,16 +205,16 @@ function ClassNavItem({
                                         className={`
                                           relative group/nav block px-2.5 py-1.5 text-sm rounded-md transition-all
                                           ${isActive
-                                                ? 'bg-saffron-500/15 text-saffron-300 font-medium'
+                                                ? 'bg-saffron-50 text-saffron-700 font-medium'
                                                 : isMatch
-                                                    ? 'bg-saffron-500/10 text-saffron-200'
-                                                    : 'text-charcoal-400 hover:text-white hover:bg-white/5'
+                                                    ? 'bg-saffron-50/70 text-saffron-700'
+                                                    : 'text-charcoal-500 hover:text-charcoal-900 hover:bg-charcoal-100'
                                             }
                                         `}
                                     >
                                         <span
                                             aria-hidden="true"
-                                            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-400 transition-all duration-200 ease-out ${isActive || isMatch ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'
+                                            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-500 transition-all duration-200 ease-out ${isActive || isMatch ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'
                                                 }`}
                                         />
                                         Shlok {shlokNum}
@@ -243,16 +230,16 @@ function ClassNavItem({
                                 className={`
                                     relative group/nav flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md transition-all
                                     ${pathname === `/class/${classId}/quiz`
-                                        ? 'bg-saffron-500/15 text-saffron-300 font-medium'
+                                        ? 'bg-saffron-50 text-saffron-700 font-medium'
                                         : searchTerm.toLowerCase().includes('quiz')
-                                            ? 'bg-saffron-500/10 text-saffron-200'
-                                            : 'text-charcoal-400 hover:text-white hover:bg-white/5'
+                                            ? 'bg-saffron-50/70 text-saffron-700'
+                                            : 'text-charcoal-500 hover:text-charcoal-900 hover:bg-charcoal-100'
                                     }
                                 `}
                             >
                                 <span
                                     aria-hidden="true"
-                                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-400 transition-all duration-200 ease-out ${pathname === `/class/${classId}/quiz` || searchTerm.toLowerCase().includes('quiz') ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'
+                                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-500 transition-all duration-200 ease-out ${pathname === `/class/${classId}/quiz` || searchTerm.toLowerCase().includes('quiz') ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'
                                         }`}
                                 />
                                 <FileQuestion size={13} />

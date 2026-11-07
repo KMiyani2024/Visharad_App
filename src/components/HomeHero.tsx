@@ -23,7 +23,7 @@ export function HomeHero({ startLink, totalClasses, totalShloks }: HomeHeroProps
 
     return (
         <div className="space-y-10 md:space-y-14">
-            <div className="relative flex flex-col items-center justify-center min-h-[72vh] md:min-h-[78vh] text-center px-4 rounded-3xl overflow-hidden shadow-2xl shadow-black/20">
+            <div className="scale-fixed relative flex flex-col items-center justify-center min-h-[64vh] md:min-h-[70vh] text-center px-4 rounded-3xl overflow-hidden shadow-2xl shadow-black/20">
                 {/* Background Image */}
                 <Image
                     src="/new_banner.jpg"
@@ -103,7 +103,7 @@ export function HomeHero({ startLink, totalClasses, totalShloks }: HomeHeroProps
                     <motion.div
                         key={stat.label}
                         variants={fadeInUp}
-                        className="flex flex-col items-center text-center gap-2 p-5 rounded-2xl bg-white border border-charcoal-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                        className="flex flex-col items-center text-center gap-2 p-5 rounded-2xl bg-card border border-charcoal-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
                     >
                         <div className="p-2.5 rounded-xl bg-saffron-50 text-saffron-600">
                             <stat.icon size={20} />

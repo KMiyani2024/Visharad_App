@@ -4,8 +4,8 @@ import { Inter, Manrope, Noto_Serif_Devanagari, Noto_Sans_Gujarati } from 'next/
 import './globals.css';
 import { MainLayout } from '@/components/MainLayout';
 import { getAllClassesMetadata } from '@/lib/data';
-import { FeedbackButton } from '@/components/FeedbackButton';
 import { CursorGlow } from '@/components/CursorGlow';
+import { THEME_BOOT_SCRIPT } from '@/lib/theme';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
@@ -23,10 +23,15 @@ const notoGujarati = Noto_Sans_Gujarati({
 export const metadata: Metadata = {
   title: 'Visharad Sahayak',
   description: 'Study support for Vidvans — Satsang Diksha shlok reading, references, audio and quizzes.',
+  icons: { icon: '/pathshala-seal.svg' },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#17171b',
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f7f5f0' },
+    { media: '(prefers-color-scheme: dark)', color: '#121212' },
+  ],
 };
 
 export default async function RootLayout({
@@ -37,7 +42,11 @@ export default async function RootLayout({
   const classesData = await getAllClassesMetadata();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply the saved light/dark choice before first paint (no flash). */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body
         className={`${inter.variable} ${manrope.variable} ${notoDevanagari.variable} ${notoGujarati.variable} font-sans antialiased`}
       >
@@ -45,7 +54,6 @@ export default async function RootLayout({
         <MainLayout classes={classesData}>
           {children}
         </MainLayout>
-        <FeedbackButton />
         <Analytics />
       </body>
     </html>

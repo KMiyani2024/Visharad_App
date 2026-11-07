@@ -96,7 +96,7 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            <div className="bg-card border border-charcoal-100 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="bg-saffron-50 px-6 py-4 border-b border-saffron-100 flex justify-between items-center shrink-0">
                     <h3 className="text-lg font-semibold text-saffron-900">
@@ -116,7 +116,7 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
                     {/* Q1: Overall Rating */}
                     <div className="space-y-3 text-center">
-                        <label className="block text-base font-medium text-gray-800">
+                        <label className="block text-base font-medium text-charcoal-800">
                             Overall, how would you rate your experience with the app so far?
                         </label>
                         {renderStars(overallRating, setOverallRating)}
@@ -124,12 +124,12 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
                     {/* Q2: Confusing Parts */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-charcoal-700">
                             Was there anything that felt confusing or hard to understand?
                         </label>
                         <textarea
                             rows={2}
-                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm text-black placeholder-charcoal-400"
+                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm bg-card text-charcoal-900 placeholder-charcoal-400 outline-none"
                             placeholder="e.g., finding the quizzes..."
                             value={confusingParts}
                             onChange={(e) => setConfusingParts(e.target.value)}
@@ -138,12 +138,12 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
                     {/* Q3: Feature Request */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-charcoal-700">
                             What is one feature we could add to make the app more useful for you?
                         </label>
                         <textarea
                             rows={2}
-                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm text-black placeholder-charcoal-400"
+                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm bg-card text-charcoal-900 placeholder-charcoal-400 outline-none"
                             placeholder="e.g., daily reminders..."
                             value={featureRequest}
                             onChange={(e) => setFeatureRequest(e.target.value)}
@@ -152,7 +152,7 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
                     {/* Q4: Navigation Rating */}
                     <div className="space-y-3 text-center">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-charcoal-700">
                             How easy is it to navigate the app and find what you need?
                         </label>
                         {renderStars(navRating, setNavRating)}
@@ -160,12 +160,12 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
 
                     {/* Q5: General Comment */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-charcoal-700">
                             Any other comments or suggestions?
                         </label>
                         <textarea
                             rows={3}
-                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm text-black placeholder-charcoal-400"
+                            className="w-full px-3 py-2 border border-charcoal-200 rounded-lg focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all resize-none text-sm bg-card text-charcoal-900 placeholder-charcoal-400 outline-none"
                             placeholder="Tell us anything else..."
                             value={generalComment}
                             onChange={(e) => setGeneralComment(e.target.value)}
@@ -180,10 +180,10 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end border-t border-gray-100 shrink-0">
+                <div className="bg-charcoal-50 px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end border-t border-charcoal-100 shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100/50 hover:scale-105 rounded-lg transition-all"
+                        className="px-4 py-2 text-sm font-medium text-charcoal-600 hover:text-charcoal-800 hover:bg-charcoal-100 hover:scale-105 rounded-lg transition-all"
                         disabled={submitting}
                     >
                         Close
@@ -191,7 +191,7 @@ export function FeedbackModal({ isOpen, onClose, onSubmitSuccess, pageUrl }: Fee
                     <button
                         onClick={handleSubmit}
                         disabled={submitting || overallRating === 0}
-                        className="px-6 py-2 text-sm font-medium text-white bg-saffron-600 hover:bg-saffron-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 rounded-lg shadow-sm hover:shadow-lg shadow-saffron-600/20 hover:scale-105 transition-all active:scale-95"
+                        className="px-6 py-2 text-sm font-medium text-white bg-saffron-500 hover:bg-saffron-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 rounded-lg shadow-sm hover:shadow-lg shadow-saffron-600/20 hover:scale-105 transition-all active:scale-95"
                     >
                         {submitting ? 'Sending...' : 'Submit Feedback'}
                     </button>

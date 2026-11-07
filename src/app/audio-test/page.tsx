@@ -13,23 +13,23 @@ export default function AudioTestPage() {
             </p>
 
             {/* Example 1: Functioning Reference */}
-            <div className="border p-4 mb-4 rounded bg-gray-50">
-                <div className="font-semibold text-blue-700">Reference: Vach.Sā.1</div>
+            <div className="border p-4 mb-4 rounded bg-charcoal-50 border-charcoal-200">
+                <div className="font-semibold text-saffron-700">Reference: Vach.Sā.1</div>
                 <div className="my-2">
                     <AudioPlayer reference="Vach.Sā.1" />
                 </div>
-                <p className="text-gray-700">
+                <p className="text-charcoal-700">
                     Lorem ipsum dolor sit amet, referencing Vachanamrut Sarangpur 1.
                 </p>
             </div>
 
             {/* Example 2: Functioning Reference (Swamini Vato) */}
-            <div className="border p-4 mb-4 rounded bg-gray-50">
-                <div className="font-semibold text-blue-700">Reference: Swā.Vāto: 1/26</div>
+            <div className="border p-4 mb-4 rounded bg-charcoal-50 border-charcoal-200">
+                <div className="font-semibold text-saffron-700">Reference: Swā.Vāto: 1/26</div>
                 <div className="my-2">
                     <AudioPlayer reference="Swā.Vāto: 1/26" />
                 </div>
-                <p className="text-gray-700">
+                <p className="text-charcoal-700">
                     More text referencing Swamini Vato 1/26.
                 </p>
             </div>
@@ -40,7 +40,7 @@ export default function AudioTestPage() {
                 <div className="my-2">
                     <AudioPlayer reference="Unknown.Ref" />
                 </div>
-                <p className="text-gray-700">
+                <p className="text-charcoal-700">
                     This reference has no mapping, so 'Coming Soon' should appear.
                 </p>
             </div>
