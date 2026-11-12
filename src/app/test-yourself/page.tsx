@@ -1,7 +1,7 @@
 import Link from "next/link";
 import fs from "fs/promises";
 import path from "path";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, GraduationCap } from "lucide-react";
 
 async function getMiniReviews() {
   const quizzesDir = path.join(process.cwd(), "public", "quizzes");
@@ -25,7 +25,7 @@ export default async function TestYourselfPage() {
   const miniReviews = await getMiniReviews();
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+    <div className="max-w-4xl mx-auto sm:p-2">
       <div className="mb-10 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 bg-saffron-50 text-saffron-700 text-xs font-semibold tracking-wide uppercase">
           <BookOpen size={14} />
@@ -39,6 +39,21 @@ export default async function TestYourselfPage() {
         </p>
       </div>
 
+      {/* Final Exam signpost */}
+      <Link
+        href="/final-exam"
+        className="group mb-6 flex items-center gap-4 rounded-2xl border border-saffron-200 bg-saffron-50 p-5 hover:border-saffron-300 hover:shadow-md transition-all"
+      >
+        <div className="p-3 rounded-xl bg-saffron-500 text-white shrink-0">
+          <GraduationCap size={24} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-display font-bold text-charcoal-900">Preparing for the Final Exam?</h2>
+          <p className="text-sm text-charcoal-600">Four papers, 100 marks — what to revise and how each paper is marked.</p>
+        </div>
+        <ArrowRight size={20} className="shrink-0 text-saffron-600 group-hover:translate-x-1 transition-transform" />
+      </Link>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {miniReviews.map((id) => {
           const startClass = Math.max(1, id - 4);
@@ -47,7 +62,7 @@ export default async function TestYourselfPage() {
             <Link
               key={id}
               href={`/test-yourself/${id}`}
-              className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-charcoal-100 hover:border-saffron-300 hover:-translate-y-0.5"
+              className="group relative bg-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-charcoal-100 hover:border-saffron-300 hover:-translate-y-0.5"
             >
               <div className="p-7">
                 <div className="flex items-start justify-between mb-6">

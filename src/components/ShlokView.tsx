@@ -28,7 +28,7 @@ export function ReadingModeToggle() {
 
 export function ExplanationPlaceholder() {
     return (
-        <div className="bg-white border border-charcoal-100 rounded-2xl p-5 mb-8 shadow-sm">
+        <div className="bg-card border border-charcoal-100 rounded-2xl p-5 mb-8 shadow-sm">
             <h3 className="text-sm font-semibold text-charcoal-400 uppercase tracking-wide mb-2">
                 Explanation
             </h3>
@@ -72,7 +72,7 @@ export function ShlokCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="relative mb-8 text-center py-10 px-4 md:px-8 bg-white rounded-3xl border border-charcoal-100 shadow-sm overflow-hidden"
+            className="relative mb-8 text-center py-10 px-4 md:px-8 bg-card rounded-3xl border border-charcoal-100 shadow-sm overflow-hidden"
         >
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-saffron-400 via-saffron-500 to-saffron-600" />
 
@@ -232,7 +232,7 @@ export function ReferenceItem({
 
 
     return (
-        <div className="mb-5 p-4 md:p-5 rounded-2xl border border-charcoal-100 bg-white hover:border-charcoal-200 transition-colors reference-block">
+        <div className="mb-5 p-4 md:p-5 rounded-2xl border border-charcoal-100 bg-card hover:border-charcoal-200 transition-colors reference-block">
             <div className="mb-3">
                 <AudioPlayer
                     reference={item.ref}
@@ -249,7 +249,7 @@ export function ReferenceItem({
                         onClick={handleRefClick}
                         className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-semibold rounded-full transition-colors ${isExpanded
                             ? 'bg-saffron-100 text-saffron-800 border-saffron-200'
-                            : 'bg-white text-charcoal-600 border-charcoal-200 hover:bg-charcoal-50'
+                            : 'bg-card text-charcoal-600 border-charcoal-200 hover:bg-charcoal-50'
                             }`}
                         title={isExpanded ? "Hide English Translation" : "Show English Translation"}
                     >
@@ -406,17 +406,18 @@ export function NavButtons({
     nextLabel?: string;
 }) {
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center mt-12 pt-6 border-t border-charcoal-100 sticky bottom-0 bg-white/90 backdrop-blur-md pb-6 gap-4 z-10">
+        <div className="flex flex-row justify-between items-center mt-12 pt-4 md:pt-6 border-t border-charcoal-100 sticky bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+4.75rem)] md:bottom-0 bg-background/90 backdrop-blur-md pb-4 md:pb-6 gap-3 md:gap-4 z-10">
             {prevHref ? (
                 <Link
                     href={prevHref}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-3 sm:py-2.5 border border-charcoal-200 rounded-full text-charcoal-600 hover:bg-charcoal-50 hover:text-charcoal-900 hover:border-charcoal-300 hover:scale-105 hover:shadow-md transition-all text-sm font-medium"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 border border-charcoal-200 rounded-full text-charcoal-600 hover:bg-charcoal-50 hover:text-charcoal-900 hover:border-charcoal-300 hover:scale-105 hover:shadow-md transition-all text-sm font-medium"
                 >
                     <ArrowLeft size={15} />
-                    Previous Shlok
+                    <span className="sm:hidden">Previous</span>
+                    <span className="hidden sm:inline">Previous Shlok</span>
                 </Link>
             ) : (
-                <span className="w-full sm:w-auto text-center px-6 py-3 sm:py-2.5 border border-charcoal-100 rounded-full text-charcoal-300 text-sm font-medium cursor-not-allowed">
+                <span className="flex-1 sm:flex-none text-center px-4 sm:px-6 py-2.5 border border-charcoal-100 rounded-full text-charcoal-300 text-sm font-medium cursor-not-allowed">
                     Previous
                 </span>
             )}
@@ -424,13 +425,13 @@ export function NavButtons({
             {nextHref ? (
                 <Link
                     href={nextHref}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-6 py-3 sm:py-2.5 bg-saffron-500 hover:bg-saffron-600 rounded-full text-white transition-all text-sm font-semibold shadow-md shadow-saffron-900/15 hover:-translate-y-0.5"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 bg-saffron-500 hover:bg-saffron-600 rounded-full text-white transition-all text-sm font-semibold shadow-md shadow-saffron-900/15 hover:-translate-y-0.5"
                 >
                     {nextLabel}
                     <ArrowRight size={15} />
                 </Link>
             ) : (
-                <span className="w-full sm:w-auto text-center px-6 py-3 sm:py-2.5 border border-charcoal-100 rounded-full text-charcoal-300 text-sm font-medium cursor-not-allowed">
+                <span className="flex-1 sm:flex-none text-center px-4 sm:px-6 py-2.5 border border-charcoal-100 rounded-full text-charcoal-300 text-sm font-medium cursor-not-allowed">
                     Next
                 </span>
             )}

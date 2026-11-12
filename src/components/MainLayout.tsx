@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
-import { Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { DharmaFlag } from './DharmaFlag';
 import { ReadingModeProvider, useReadingMode } from '@/lib/readingMode';
 import { AudioPlayerProvider } from '@/lib/audioPlayer';
 import { NowPlayingBar } from './NowPlayingBar';
+import { TopNav } from './nav/TopNav';
+import { BottomTabBar } from './nav/BottomTabBar';
 
 type MainLayoutProps = {
     classes: {
@@ -29,10 +29,19 @@ export function MainLayout(props: MainLayoutProps) {
     );
 }
 
+/** First shlok of the first class — where "Study" starts. */
+function getStudyHref(classes: MainLayoutProps['classes']) {
+    const first = classes[0];
+    if (!first || first.shloks.length === 0) return '/';
+    const classId = first.filename.match(/(\d+)/)?.[0] || '1';
+    return `/class/${classId}/shlok/${first.shloks[0]}`;
+}
+
 function MainLayoutInner({ classes, children }: MainLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const { readingMode } = useReadingMode();
+    const studyHref = getStudyHref(classes);
 
     const closeMenu = () => setIsMobileMenuOpen(false);
 
@@ -42,24 +51,8 @@ function MainLayoutInner({ classes, children }: MainLayoutProps) {
     }, [pathname]);
 
     return (
-        <div className="min-h-screen bg-background text-charcoal-900 font-sans flex flex-col md:flex-row">
-
-            {/* Mobile Header */}
-            <header className="md:hidden flex items-center justify-between px-4 py-3 bg-charcoal-900 sticky top-0 z-20 shadow-lg shadow-black/10">
-                <button
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="p-2 -ml-2 text-charcoal-200 hover:text-white hover:bg-white/10 hover:scale-105 rounded-lg transition-all"
-                    aria-label="Open menu"
-                >
-                    <Menu size={22} />
-                </button>
-
-                <h1 className="text-base font-display font-bold text-white absolute left-1/2 -translate-x-1/2 tracking-tight">
-                    Visharad Sahayak
-                </h1>
-
-                <DharmaFlag className="w-4 h-6 text-charcoal-500" animate={false} />
-            </header>
+        <div className="min-h-screen text-charcoal-900 font-sans flex flex-col">
+            <TopNav studyHref={studyHref} onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
             {/* Mobile Overlay Backdrop */}
             <AnimatePresence>
@@ -68,43 +61,46 @@ function MainLayoutInner({ classes, children }: MainLayoutProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
                         onClick={closeMenu}
                         aria-hidden="true"
                     />
                 )}
             </AnimatePresence>
 
-            {/* Sidebar Container */}
-            <div className={`
-        fixed inset-y-0 left-0 z-40 w-72 transform transition-all duration-300 ease-out md:translate-x-0 md:static md:z-0 md:h-screen md:sticky md:top-0
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${readingMode ? 'md:opacity-40 md:hover:opacity-100' : ''}
-      `}>
-                <Sidebar
-                    classes={classes}
-                    onLinkClick={closeMenu}
-                    onClose={closeMenu}
-                />
+            <div className="flex flex-1">
+                {/* Class list: a drawer on phones, a sticky rail under the top bar on md+ */}
+                <div className={`
+                    fixed inset-y-0 left-0 z-50 w-72 transform transition-all duration-300 ease-out
+                    md:sticky md:top-[60px] md:z-0 md:h-[calc(100dvh-60px)] md:translate-x-0 md:shrink-0
+                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                    ${readingMode ? 'md:opacity-40 md:hover:opacity-100' : ''}
+                `}>
+                    <Sidebar
+                        classes={classes}
+                        onLinkClick={closeMenu}
+                        onClose={closeMenu}
+                    />
+                </div>
+
+                {/* Main Content (bottom padding clears the phone's tab bar) */}
+                <main className="relative z-10 flex-1 min-w-0 w-full max-w-5xl mx-auto md:px-8 px-4 pt-6 md:pt-10 pb-32 md:pb-12">
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                            key={pathname}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        >
+                            {children}
+                        </motion.div>
+                    </AnimatePresence>
+                </main>
             </div>
 
-            {/* Main Content */}
-            <main className="relative z-10 flex-1 w-full max-w-5xl mx-auto md:px-8 px-4 py-6 md:py-10">
-                <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                        key={pathname}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    >
-                        {children}
-                    </motion.div>
-                </AnimatePresence>
-            </main>
-
+            <BottomTabBar studyHref={studyHref} />
             <NowPlayingBar />
-
         </div>
     );
 }

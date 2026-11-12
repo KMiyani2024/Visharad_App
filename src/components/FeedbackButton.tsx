@@ -11,13 +11,16 @@ export function FeedbackButton() {
 
     return (
         <>
+            {/* Lives in the top bar (it used to float over page content). */}
             <button
+                type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="fixed top-4 right-4 z-[9999] flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-white/90 backdrop-blur-sm hover:bg-saffron-50 rounded-full shadow-lg border border-saffron-200 text-saffron-700 font-medium transition-all duration-300 hover:scale-105 group"
-                aria-label="Give Feedback"
+                className="group flex h-9 items-center gap-1.5 rounded-full border border-saffron-200 bg-saffron-50 px-2.5 lg:px-3.5 text-[13px] font-semibold text-saffron-700 transition-all hover:bg-saffron-100 active:scale-95"
+                aria-label="Give feedback"
+                title="Give feedback"
             >
-                <MessageSquarePlus size={20} className="group-hover:rotate-12 transition-transform duration-300" />
-                <span className="hidden md:inline">Give us feedback</span>
+                <MessageSquarePlus size={17} className="group-hover:rotate-12 transition-transform duration-300" />
+                <span className="hidden lg:inline">Feedback</span>
             </button>
 
             <FeedbackModal

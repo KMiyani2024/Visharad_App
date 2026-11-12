@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
-:root {
-  --background: #fafaf9;
+/* Class-based dark mode: `.dark` on <html>, set before paint by the boot script in layout.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Theme tokens.
+ *
+ * Light = warm paper (the Smruti / Pathshala family look). Dark = neutral grey.
+ * The charcoal and saffron scales FLIP in dark mode (Radix-style), so existing
+ * classes such as `text-charcoal-900` ("strong text") or `bg-saffron-50`
+ * ("faint accent tint") keep their meaning in both themes without a `dark:`
+ * variant on every element.
+ *
+ * Surfaces that are dark in BOTH themes (the photo hero, the audio bar) carry
+ * `.scale-fixed`, which pins the light-theme scale so their dark overlays and
+ * white text stay as designed.
+ */
+:root,
+.dark .scale-fixed {
+  --background: #f7f5f0;
   --foreground: #1b1b1f;
+  --card: #fffefb;
+  --dots: rgb(146 134 105 / 0.26);
+
+  /* Final Exam paper hues */
+  --paper-1: #db6a02;
+  --paper-2: hsl(156 70% 30%);
+  --paper-3: hsl(221 75% 48%);
+  --paper-4: hsl(265 55% 50%);
 
   /* Saffron — primary brand accent */
   --color-saffron-50: #fff8ed;
@@ -29,11 +54,60 @@
   --color-charcoal-800: #232329;
   --color-charcoal-900: #17171b;
   --color-charcoal-950: #0d0d10;
+
+  color-scheme: light;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #ededed;
+  --card: #1a1a1a;
+  --dots: rgb(156 163 175 / 0.08);
+
+  --paper-1: #ffa245;
+  --paper-2: hsl(152 48% 54%);
+  --paper-3: hsl(217 72% 66%);
+  --paper-4: hsl(265 60% 74%);
+
+  /* Saffron, flipped: 50–300 become deep tints, 600–950 become light text tones.
+     400/500 (buttons, indicators) stay put. */
+  --color-saffron-50: #26170a;
+  --color-saffron-100: #3a230c;
+  --color-saffron-200: #5c370f;
+  --color-saffron-300: #8f5514;
+  --color-saffron-400: #ff9a2e;
+  --color-saffron-500: #f5820b;
+  --color-saffron-600: #ffa245;
+  --color-saffron-700: #ffb76b;
+  --color-saffron-800: #ffcd96;
+  --color-saffron-900: #ffe0bd;
+  --color-saffron-950: #fff1e0;
+
+  /* Charcoal, flipped: 50 = faint raised surface … 950 = strongest text. */
+  --color-charcoal-50: #1f1f1f;
+  --color-charcoal-100: #2a2a2a;
+  --color-charcoal-200: #363636;
+  --color-charcoal-300: #4a4a4a;
+  --color-charcoal-400: #7a7a7a;
+  --color-charcoal-500: #a3a3a3;
+  --color-charcoal-600: #b9b9b9;
+  --color-charcoal-700: #d0d0d0;
+  --color-charcoal-800: #e2e2e2;
+  --color-charcoal-900: #ededed;
+  --color-charcoal-950: #f7f7f7;
+
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+
+  --color-paper-1: var(--paper-1);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-paper-4: var(--paper-4);
 
   --color-saffron-50: var(--color-saffron-50);
   --color-saffron-100: var(--color-saffron-100);
@@ -106,9 +180,18 @@
   scrollbar-color: var(--color-charcoal-300) transparent;
 }
 
+/* One seamless colour per theme, overscroll included. */
+html {
+  background-color: var(--background);
+}
+
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
+  /* Faint dot grid, shared with Smruti and the Pathshala overview. */
+  background-image: radial-gradient(var(--dots) 0.8px, transparent 1.1px);
+  background-size: 18px 18px;
+  background-attachment: fixed;
 }
 
 ::selection {
@@ -125,7 +208,7 @@ body {
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--color-charcoal-600);
+  background-color: var(--color-charcoal-300);
   border-radius: 9999px;
 }
 
@@ -150,3 +233,98 @@ body {
   text-wrap: balance;
 }
 
+/* ——— Navigation glass (after Smruti's tab bar) ——— */
+
+/* The sticky top bar: paper-tinted glass with a hairline. */
+.glass-bar {
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+}
+
+/* The phone's floating bottom capsule. */
+.liquid-glass-nav {
+  background: rgb(255 254 251 / 0.94);
+  backdrop-filter: blur(40px) saturate(2.2);
+  -webkit-backdrop-filter: blur(40px) saturate(2.2);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    inset 0 -1px 0 rgb(0 0 0 / 0.04),
+    0 12px 40px rgb(0 0 0 / 0.14);
+}
+.dark .liquid-glass-nav {
+  background: rgb(26 26 26 / 0.94);
+  border-color: rgb(255 255 255 / 0.12);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 12px 40px rgb(0 0 0 / 0.5);
+}
+
+/* The Pathshala seal is a white disc; give it a hairline ring so it reads on paper. */
+.seal-ring {
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+.dark .seal-ring {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-nav,
+  .glass-bar {
+    transition: none;
+  }
+}
+
+/* ——— Word booklets rendered in-app (mammoth HTML) ——— */
+.docx-content {
+  color: var(--color-charcoal-800);
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.docx-content > * + * {
+  margin-top: 0.85em;
+}
+.docx-content h1,
+.docx-content h2,
+.docx-content h3,
+.docx-content h4 {
+  color: var(--color-charcoal-900);
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 1.6em;
+}
+.docx-content h1 { font-size: 1.6rem; }
+.docx-content h2 { font-size: 1.35rem; }
+.docx-content h3 { font-size: 1.15rem; }
+.docx-content > :first-child { margin-top: 0; }
+.docx-content strong { color: var(--color-charcoal-900); }
+.docx-content ul,
+.docx-content ol {
+  padding-left: 1.4em;
+}
+.docx-content ul { list-style: disc; }
+.docx-content ol { list-style: decimal; }
+.docx-content li + li { margin-top: 0.3em; }
+.docx-content a {
+  color: var(--color-saffron-700);
+  text-decoration: underline;
+}
+.docx-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+  display: block;
+  overflow-x: auto;
+}
+.docx-content td,
+.docx-content th {
+  border: 1px solid var(--color-charcoal-200);
+  padding: 0.5em 0.75em;
+  vertical-align: top;
+}
+.docx-content img {
+  max-width: 100%;
+  height: auto;
+}
