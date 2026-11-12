@@ -1,23 +1,25 @@
 import type { Metadata, Viewport } from 'next';
 import { Analytics } from "@vercel/analytics/next";
-import { Inter, Manrope, Noto_Serif_Devanagari, Noto_Sans_Gujarati } from 'next/font/google';
+import { Geist, Geist_Mono, Mukta_Vaani, Noto_Serif_Devanagari } from 'next/font/google';
 import './globals.css';
 import { MainLayout } from '@/components/MainLayout';
 import { getAllClassesMetadata } from '@/lib/data';
 import { CursorGlow } from '@/components/CursorGlow';
 import { THEME_BOOT_SCRIPT } from '@/lib/theme';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' });
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono', display: 'swap' });
 const notoDevanagari = Noto_Serif_Devanagari({
   subsets: ['devanagari'],
   weight: ['500', '600', '700'],
   variable: '--font-noto-devanagari',
 });
-const notoGujarati = Noto_Sans_Gujarati({
-  subsets: ['gujarati'],
-  weight: ['400', '500', '600'],
-  variable: '--font-noto-gujarati',
+// Gujarati: Mukta Vaani (Ek Type), a calm humanist face that sits well beside Geist.
+const gujarati = Mukta_Vaani({
+  subsets: ['gujarati'], // Gujarati glyphs only; Latin falls through to Geist
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-gujarati-face',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -48,7 +50,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body
-        className={`${inter.variable} ${manrope.variable} ${notoDevanagari.variable} ${notoGujarati.variable} font-sans antialiased`}
+        className={`${geist.variable} ${geistMono.variable} ${notoDevanagari.variable} ${gujarati.variable} font-sans antialiased`}
       >
         <CursorGlow />
         <MainLayout classes={classesData}>

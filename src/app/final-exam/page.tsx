@@ -67,7 +67,7 @@ export default async function FinalExamPage() {
     const presentationMarks = FINAL_EXAM_TOTAL - mukhpathMarks;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+        <div className="stagger max-w-4xl mx-auto space-y-6 md:space-y-8">
             {/* Header */}
             <header>
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-5 bg-saffron-50 text-saffron-700 ring-1 ring-saffron-200 text-xs font-semibold tracking-wide uppercase">
@@ -120,7 +120,7 @@ export default async function FinalExamPage() {
                 </div>
 
                 {/* Legend: jump to each paper */}
-                <ul className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <ul className="stagger mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     {EXAM_PAPERS.map((p) => (
                         <li key={p.key}>
                             <a
@@ -154,9 +154,7 @@ export default async function FinalExamPage() {
                         aria-labelledby={`paper-${p.number}-title`}
                         className="relative scroll-mt-24 overflow-hidden rounded-3xl border border-charcoal-100 bg-card shadow-sm"
                     >
-                        <div aria-hidden="true" className={`absolute inset-y-0 left-0 w-1.5 ${tone.bg}`} />
-
-                        <div className="p-5 pl-6 sm:p-7 sm:pl-8">
+                        <div className="p-5 sm:p-7">
                             {/* Title row */}
                             <div className="flex items-start justify-between gap-4">
                                 <div className="min-w-0">

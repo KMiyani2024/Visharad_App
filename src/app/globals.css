@@ -133,16 +133,27 @@
   --color-charcoal-900: var(--color-charcoal-900);
   --color-charcoal-950: var(--color-charcoal-950);
 
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-manrope);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --font-devanagari: var(--font-noto-devanagari);
-  --font-gujarati: var(--font-noto-gujarati);
+  --font-gujarati: var(--font-gujarati-face), var(--font-geist), var(--font-noto-devanagari), sans-serif;
 
   --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-flag-sway: flag-sway 4s ease-in-out infinite;
   --animate-shimmer: shimmer 2s linear infinite;
   --animate-highlight-flash: highlight-flash 1.4s ease-out;
   --animate-pulse-bar: pulse-bar 0.9s ease-in-out infinite;
+  --animate-page-enter: page-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
 
   @keyframes fade-in-up {
     from {
@@ -269,11 +280,152 @@ body {
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .liquid-glass-nav,
-  .glass-bar {
-    transition: none;
+/* ——— Motion ———
+   One easing and two speeds everywhere, so every hover, press, open and page
+   change moves the same way. Utilities (transition-*, duration-*) still win. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
   }
+
+  a,
+  button,
+  summary,
+  input,
+  select,
+  textarea,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'] {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color,
+      fill, stroke, opacity, box-shadow, transform, translate, scale;
+    transition-timing-function: var(--ease-smooth);
+    transition-duration: 200ms;
+  }
+
+  /* A soft press on anything you tap. */
+  button:not(:disabled):active,
+  [role='button']:not([aria-disabled='true']):active {
+    transform: scale(0.97);
+    transition-duration: 90ms;
+  }
+}
+
+/* Each page eases in when you arrive (src/app/template.tsx). "backwards" fill
+   leaves no transform behind, so fixed and sticky children are unaffected. */
+.page-enter {
+  animation: var(--animate-page-enter);
+}
+
+/* Lists and grids: children rise in one after another. */
+.stagger > * {
+  animation: page-enter 0.5s var(--ease-smooth) backwards;
+}
+.stagger > :nth-child(2) { animation-delay: 50ms; }
+.stagger > :nth-child(3) { animation-delay: 100ms; }
+.stagger > :nth-child(4) { animation-delay: 150ms; }
+.stagger > :nth-child(5) { animation-delay: 200ms; }
+.stagger > :nth-child(6) { animation-delay: 250ms; }
+.stagger > :nth-child(n + 7) { animation-delay: 300ms; }
+
+/* Switching light/dark cross-fades the colours instead of snapping
+   (theme-anim is added for a moment by applyTheme). */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow !important;
+  transition-duration: 350ms !important;
+  transition-timing-function: var(--ease-smooth) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ——— Sectioned booklets (src/components/final-exam/booklet) ——— */
+.booklet-prose {
+  --reading-size: 1.0625rem;
+  color: var(--color-charcoal-800);
+  font-size: var(--reading-size);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+html[data-reading-size='lg'] .booklet-prose { --reading-size: 1.1875rem; }
+html[data-reading-size='xl'] .booklet-prose { --reading-size: 1.3125rem; }
+.booklet-prose.font-gujarati { line-height: 1.95; }
+.booklet-prose > * + * { margin-top: 1em; }
+/* Verse lines (kirtan pads, shlok halves) arrive as line breaks inside one text. */
+.booklet-prose p,
+.booklet-prose li,
+.booklet-ref-text,
+.booklet-ref-tr { white-space: pre-line; }
+.booklet-prose .docx-content { font-size: inherit; line-height: inherit; }
+.booklet-prose h3 {
+  margin-top: 1.9em;
+  color: var(--color-charcoal-900);
+  font-size: 1.15em;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.booklet-prose > h3:first-child { margin-top: 0; }
+.booklet-prose ul,
+.booklet-prose ol { padding-left: 1.3em; }
+.booklet-prose ul { list-style: disc; }
+.booklet-prose ol { list-style: decimal; }
+.booklet-prose li + li { margin-top: 0.4em; }
+.booklet-prose li::marker { color: var(--color-saffron-500); }
+.booklet-prose blockquote {
+  border-radius: 1rem;
+  background: var(--color-charcoal-50);
+  padding: 0.9em 1.1em;
+  color: var(--color-charcoal-800);
+}
+.booklet-prose blockquote cite,
+.booklet-ref cite {
+  display: block;
+  margin-top: 0.5em;
+  color: var(--color-saffron-700);
+  font-size: 0.85em;
+  font-style: normal;
+  font-weight: 600;
+}
+.booklet-ref {
+  border: 1px solid var(--color-charcoal-100);
+  border-radius: 1.1rem;
+  background: var(--color-charcoal-50);
+  padding: 1.1em 1.2em;
+}
+.booklet-ref-no {
+  margin-bottom: 0.5em;
+  color: var(--color-charcoal-400);
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+.booklet-ref-text {
+  color: var(--color-charcoal-900);
+  font-size: 1.08em;
+  font-weight: 500;
+  line-height: 1.75;
+}
+.booklet-ref-tr {
+  margin-top: 0.8em;
+  border-top: 1px dashed var(--color-charcoal-200);
+  padding-top: 0.8em;
+  color: var(--color-charcoal-600);
+  font-size: 0.95em;
 }
 
 /* ——— Word booklets rendered in-app (mammoth HTML) ——— */
