@@ -54,7 +54,7 @@ export default async function TestYourselfPage() {
         <ArrowRight size={20} className="shrink-0 text-saffron-600 group-hover:translate-x-1 transition-transform" />
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="stagger grid grid-cols-1 md:grid-cols-2 gap-5">
         {miniReviews.map((id) => {
           const startClass = Math.max(1, id - 4);
           const endClass = id;

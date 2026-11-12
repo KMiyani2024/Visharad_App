@@ -28,10 +28,15 @@ export function areFilesConfigured(): boolean {
     return containerSas() !== null;
 }
 
-/** Signed blob URL for a booklet (server-side only), or null if not configured. */
-export function getSignedBlobUrl(file: ExamFile): string | null {
+/** Signed URL for any blob in the container (server-side only), or null if not configured. */
+export function signedBlobUrl(blobName: string): string | null {
     const container = containerSas();
     if (!container) return null;
-    const blobPath = file.blob.split('/').map(encodeURIComponent).join('/');
+    const blobPath = blobName.split('/').map(encodeURIComponent).join('/');
     return `${container.baseUrl}/${blobPath}${container.sas}`;
+}
+
+/** Signed blob URL for a booklet (server-side only), or null if not configured. */
+export function getSignedBlobUrl(file: ExamFile): string | null {
+    return signedBlobUrl(file.blob);
 }

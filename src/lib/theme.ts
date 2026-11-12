@@ -18,11 +18,19 @@ export function readThemeChoice(): ThemeChoice {
     return 'system';
 }
 
+let themeAnimTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Applies the theme; colours cross-fade for a moment (see .theme-anim in globals.css). */
 export function applyTheme(choice: ThemeChoice) {
     const dark =
         choice === 'dark' ||
         (choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.classList.toggle('dark', dark);
+    const root = document.documentElement;
+    if (root.classList.contains('dark') === dark) return;
+    root.classList.add('theme-anim');
+    root.classList.toggle('dark', dark);
+    clearTimeout(themeAnimTimer);
+    themeAnimTimer = setTimeout(() => root.classList.remove('theme-anim'), 400);
 }
 
 const THEME_EVENT = 'visharad-theme-change';
