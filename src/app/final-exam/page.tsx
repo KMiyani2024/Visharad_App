@@ -27,7 +27,7 @@ import { TopicChecklist } from '@/components/final-exam/TopicChecklist';
 
 export const metadata: Metadata = {
     title: 'Final Exam · Visharad Sahayak',
-    description: 'The Visharad Final Exam: four papers, 100 marks — what to revise and how each paper is marked.',
+    description: 'The Visharad Final Exam: four presentation-style papers, 100 marks — what to revise and how each paper is marked.',
 };
 
 // Booklet links depend on FINAL_EXAM_SAS_URL, read at request time.
@@ -78,8 +78,9 @@ export default async function FinalExamPage() {
                     Final Exam
                 </h1>
                 <p className="mt-3 max-w-2xl text-lg leading-relaxed text-charcoal-500">
-                    Four papers worth {FINAL_EXAM_TOTAL} marks: {mukhpathMarks} for the Mukhpath oral and{' '}
-                    {presentationMarks} across three presentation papers.
+                    Four papers worth {FINAL_EXAM_TOTAL} marks: {mukhpathMarks} for reciting Mukhpath and{' '}
+                    {presentationMarks} for explaining shloks, topics and FAQs in your own words. Every paper is
+                    presented to an examiner. There is no written exam.
                 </p>
             </header>
 
@@ -167,10 +168,18 @@ export default async function FinalExamPage() {
                                     >
                                         {p.examTitle}
                                     </h2>
-                                    <span className={`mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${tone.soft} ${tone.text} ${tone.ring}`}>
-                                        <TypeIcon size={13} />
-                                        {p.type}
-                                    </span>
+                                    <div className="mt-2.5 flex flex-wrap gap-2">
+                                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${tone.soft} ${tone.text} ${tone.ring}`}>
+                                            <TypeIcon size={13} />
+                                            {p.type}
+                                        </span>
+                                        {p.scope && (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-charcoal-200 px-2.5 py-1 text-xs font-medium text-charcoal-600">
+                                                <b className="font-semibold text-charcoal-900 tabular-nums">{p.scope.selected}</b>
+                                                {p.scope.of ? ` of ${p.scope.of}` : ''} {p.scope.unit} to revise
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="shrink-0 text-right">
