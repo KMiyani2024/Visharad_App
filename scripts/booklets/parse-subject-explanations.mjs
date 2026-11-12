@@ -5,7 +5,9 @@
  *   const booklet = await parse({ file, lang: 'en' | 'gu', paper, source });
  *
  * Returns a `Booklet` (src/lib/booklet.ts): one group ("all") with 17 sections,
- * "topic-1" … "topic-17", each a list of h / p / list / quote blocks.
+ * "topic-1" … "topic-17", each a list of h / p / list / quote / crop blocks.
+ * Sanskrit (Devanagari) is never emitted as text: its lines are `crop` blocks,
+ * slices of the page image (see "Devanagari → crops" below).
  *
  * Both booklets are tagged PDFs exported from Google Docs, so the parser combines
  * three readings of the same file:
@@ -31,8 +33,11 @@
  * contents come before the first topic title and are skipped.
  *
  * Text is kept as printed: the only changes are joining wrapped lines, removing
- * zero-width characters (U+200B, U+FEFF, U+2060, U+00AD) and removing whitespace
- * that pdftotext leaves before an Indic combining mark.
+ * zero-width characters (U+200B, U+FEFF, U+2060, U+00AD), removing whitespace
+ * that pdftotext leaves before an Indic combining mark, and putting a misplaced
+ * Gujarati mark back in order where pdf.js proves the order (see `reconcile`).
+ *
+ * Needs poppler's pdftotext, pdfinfo and pdftoppm, and pdfjs-dist.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -141,6 +146,7 @@ async function readPdf(file) {
     for (let p = 1; p <= doc.numPages; p++) {
         const page = await doc.getPage(p);
         const height = page.view[3] - page.view[1];
+        const width = page.view[2] - page.view[0];
 
         // Marked-content sequences in tag-tree order.
         const order = [];
@@ -226,7 +232,7 @@ async function readPdf(file) {
             }
             items.push({ mcid: cur, str: it.str, x0: e, x1: e + it.width, base, top: base - 0.8 * size, bottom: base + 0.25 * size, size });
         }
-        pages.push({ height, order, stats, items, spaces });
+        pages.push({ width, height, order, stats, items, spaces });
     }
     return pages;
 }
@@ -322,7 +328,7 @@ function matchWords(words, items) {
  * measure ≤ 0.16 em) or an explicit space glyph lies between them. Each Indic
  * token is then checked against pdf.js (see `reconcile`).
  */
-function chunkLines(words, page, counts) {
+function chunkLines(words, page, pageNo, counts) {
     const sorted = [...words].sort((a, b) => a.base - b.base || a.x0 - b.x0);
     const lines = [];
     for (const w of sorted) {
@@ -351,7 +357,16 @@ function chunkLines(words, page, counts) {
             if (wide || glyph) tokens.push([b]);
             else tokens.at(-1).push(b);
         }
-        return tokens.map((t) => reconcile(t, l.base, page.items, counts)).join(' ');
+        const texts = tokens.map((t) => reconcile(t, l.base, page.items, counts));
+        return {
+            text: texts.join(' '),
+            tokens: texts,
+            page: pageNo,
+            base: l.base,
+            size: l.size,
+            x0: Math.min(...ws.map((w) => w.x0)),
+            x1: Math.max(...ws.map((w) => w.x1)),
+        };
     });
 }
 
@@ -460,7 +475,8 @@ export async function extract(file) {
     const elements = [];
     const byId = new Map();
     const unmatched = [];
-    const gaps = { 'wide-glyph': 0, 'wide-noglyph': 0, 'narrow-glyph': 0, 'narrow-noglyph': 0 };
+    const gaps = {}; // QA counters (see reconcile)
+    const pageLines = []; // every text line's baseline and size per page (crop limits)
     let leafIndex = 0;
 
     pdfPages.forEach((pg, pi) => {
@@ -468,6 +484,9 @@ export async function extract(file) {
         const byMc = new Map();
         const pageWords = wordPages[pi] ?? [];
         const matches = matchWords(pageWords, pg.items);
+        const seen = new Map();
+        for (const it of matches) if (it && it.base !== undefined) seen.set(Math.round(it.base * 2), { base: it.base, size: it.size });
+        pageLines[pi] = [...seen.values()].sort((a, b) => a.base - b.base);
         for (const [wi, w] of pageWords.entries()) {
             const it = matches[wi];
             if (!it) {
@@ -507,7 +526,7 @@ export async function extract(file) {
                 byId.set(el.id, e);
                 elements.push(e);
             }
-            e.lines.push(...chunkLines(words, pg, gaps));
+            e.lines.push(...chunkLines(words, pg, pi + 1, gaps));
             addStats(e.stats, stats);
             for (const w of words) e.size = Math.max(e.size, w.size);
             if (!e.pages.includes(pi + 1)) e.pages.push(pi + 1);
@@ -515,7 +534,7 @@ export async function extract(file) {
     });
 
     for (const e of elements) {
-        e.rawText = joinLines(e.lines);
+        e.rawText = joinLines(e.lines.map((l) => l.text));
         e.text = cleanText(e.rawText);
         const g = e.stats.glyphs || 1;
         e.maroon = e.stats.maroon / g;
@@ -525,7 +544,8 @@ export async function extract(file) {
         e.italic = e.stats.italic / g;
         e.boldSpaces = e.stats.spaces ? e.stats.boldSpaces / e.stats.spaces : 0;
     }
-    return { elements: elements.filter((e) => e.text), unmatched, gaps };
+    const pages = pdfPages.map((pg, pi) => ({ width: pg.width, height: pg.height, lines: pageLines[pi] }));
+    return { elements: elements.filter((e) => e.text), unmatched, gaps, pages };
 }
 
 /* ---------------------------------------------------------- 6. classification */
@@ -577,10 +597,80 @@ function finishList(blocks) {
     delete b._key;
 }
 
+/* ------------------------------------------------------- Devanagari → crops */
+
+/*
+ * The Sanskrit (Devanagari) in these PDFs cannot be extracted faithfully: Word
+ * saved wrong glyph-to-Unicode data, so vowel signs land on the wrong consonant
+ * ("गुरोः" → "गरुोः", "सुखा" → "सखुा"), and some of the errors are well-formed.
+ * No Devanagari text is ever emitted: every line holding Devanagari becomes part
+ * of a `crop` block (a slice of the page image), and the text around it stays text.
+ *
+ * Devanagari means Unicode Script=Devanagari. The danda and double danda (U+0964,
+ * U+0965) are Script=Common and close Gujarati verses too, so outside a Sanskrit
+ * line they stay text. Set CROP_DANDA to treat them as Devanagari as well.
+ */
+const CROP_DANDA = false;
+const DEVANAGARI = CROP_DANDA ? /[\p{Script=Devanagari}\u0964\u0965]/u : /\p{Script=Devanagari}/u;
+// Quote marks and closing punctuation next to a verse go with it into the crop.
+const VERSE_BEFORE = /^[“"‘']+$/u;
+const VERSE_AFTER = /^[”"’'।॥.,;:!?]+$/u;
+
+/**
+ * Splits an element into pieces in reading order: { text } for runs of tokens
+ * without Devanagari and { crop: lines } for the lines holding Devanagari. A line
+ * that mixes scripts is cropped whole; its other words are kept as text as well,
+ * so the text still reads in full.
+ */
+function splitDevanagari(e) {
+    if (!DEVANAGARI.test(e.text)) return [{ text: e.text }];
+    const seq = e.lines.flatMap((l, li) => l.tokens.map((t) => ({ t, li })));
+    const deva = seq.map((x) => DEVANAGARI.test(x.t));
+    for (let i = 0; i < seq.length; i++) {
+        if (!deva[i]) continue;
+        for (let j = i - 1; j >= 0 && !deva[j] && VERSE_BEFORE.test(cleanText(seq[j].t)); j--) deva[j] = true;
+        for (let j = i + 1; j < seq.length && !deva[j] && VERSE_AFTER.test(cleanText(seq[j].t)); j++) deva[j] = true;
+    }
+    const pieces = [];
+    for (let i = 0; i < seq.length; ) {
+        let j = i;
+        while (j < seq.length && deva[j] === deva[i]) j++;
+        const run = seq.slice(i, j);
+        if (deva[i]) {
+            const lis = [...new Set(run.map((x) => x.li))];
+            const prev = pieces.at(-1);
+            if (prev?.crop) prev.crop.push(...lis.filter((li) => !prev.crop.includes(li)));
+            else pieces.push({ crop: lis });
+        } else {
+            const byLine = [];
+            for (const x of run) {
+                if (byLine.at(-1)?.li !== x.li) byLine.push({ li: x.li, ts: [] });
+                byLine.at(-1).ts.push(x.t);
+            }
+            const text = cleanText(joinLines(byLine.map((b) => b.ts.join(' '))));
+            if (text) pieces.push({ text });
+        }
+        i = j;
+    }
+    for (const p of pieces) if (p.crop) p.crop = p.crop.sort((a, b) => a - b).map((li) => e.lines[li]);
+    return pieces;
+}
+
+/** Adds crop lines to the section, extending the previous crop on the same page. */
+function pushCrop(blocks, lines) {
+    for (const l of lines) {
+        const last = blocks.at(-1);
+        if (last?.t === 'crop' && last.page === l.page) last._lines.push(l);
+        else blocks.push({ t: 'crop', page: l.page, top: 0, bottom: 0, _lines: [l] });
+    }
+}
+
+/* ------------------------------------------------------------ classification */
+
 function classify(elements, lang) {
     const sections = [];
     let sec = null;
-    let shloka = null; // the open quote block collecting shloka lines
+    let shloka = null; // the open quote block collecting non-Devanagari verse lines
 
     const push = (block) => {
         if (block.t !== 'list') finishList(sec.blocks);
@@ -596,43 +686,60 @@ function classify(elements, lang) {
                 title: top.title,
                 subtitle: lang === 'gu' ? `વિષય ${toGujaratiDigits(top.n)}` : `Topic ${top.n}`,
                 blocks: [],
+                _x: [Infinity, -Infinity],
             };
             sections.push(sec);
             shloka = null;
             continue;
         }
         if (!sec) continue; // cover and table of contents
+        for (const l of e.lines) sec._x = [Math.min(sec._x[0], l.x0), Math.max(sec._x[1], l.x1)];
 
-        let text = e.text;
+        splitDevanagari(e).forEach((piece, n) => {
+            if (piece.crop) {
+                finishList(sec.blocks);
+                pushCrop(sec.blocks, piece.crop);
+                return;
+            }
+            // Text after a crop continues the element as a plain paragraph.
+            classifyText(n === 0 ? e : { ...e, role: 'P', listId: null, listDepth: 0 }, piece.text);
+        });
+    }
+    if (sec) finishList(sec.blocks);
+    return sections;
+
+    function classifyText(e, text) {
         const blocks = sec.blocks;
         const last = blocks.at(-1);
 
-        // Sanskrit shloka lines (orange / Mangal): one quote block, one line per tagged line.
+        // Verse lines in orange that are not Devanagari: one quote, one line each.
         if (e.orange >= 0.6) {
             if (shloka && last === shloka) shloka.text += '\n' + text;
             else push((shloka = { t: 'quote', text }));
-            continue;
+            return;
         }
 
-        // A citation on its own line belongs to the passage above it.
+        // A citation on its own line belongs to the passage above it; after a
+        // cropped verse it stays a paragraph of its own.
         const co = CITE_ONLY.exec(text);
         if (co && (e.grey >= 0.6 || /[0-9૦-૯]/.test(co[1])) && last && !last.cite) {
             if (last.t === 'quote') {
                 last.cite = co[1].trim();
-                continue;
+                return;
             }
             if (last.t === 'p') {
                 blocks[blocks.length - 1] = { t: 'quote', text: last.text, cite: co[1].trim() };
-                continue;
+                return;
             }
         }
 
         const bullet = BULLET.test(text) || (e.role === 'LI' && O_BULLET.test(text));
         const stripped = text.replace(BULLET, '').replace(e.role === 'LI' ? O_BULLET : /^$/, '');
+        if (!stripped) return;
 
         if (isHeading(e, stripped)) {
             push({ t: 'h', text: stripped });
-            continue;
+            return;
         }
 
         if (e.role === 'LI' || (bullet && e.role !== 'P')) {
@@ -644,19 +751,157 @@ function classify(elements, lang) {
                 finishList(blocks);
                 blocks.push({ t: 'list', items: [stripped], _raw: [stripped], _key: key });
             }
-            continue;
+            return;
         }
 
         const ic = INLINE_CITE.exec(text);
         if (ic && OPEN_QUOTE.test(ic[1])) {
             push({ t: 'quote', text: ic[1].trim(), cite: ic[2].trim() });
-            continue;
+            return;
         }
 
         push({ t: 'p', text });
     }
-    if (sec) finishList(sec.blocks);
-    return sections;
+}
+
+/* ---------------------------------------------------------------- crop edges */
+
+const DPI = 144;
+const PX = DPI / 72; // pixels per point
+const INK = 200; // grey level below which a pixel is ink (the verse panel is ~251)
+const PAD = 4; // points of white kept around the verse
+const MIN_GAP = 1.5; // points: the thinnest blank band taken for a gap between lines
+// Verse ink reaches at most 1.01 em above and 0.44 em below the baseline (measured
+// over every crop of both booklets that has a clean gap).
+const ENV_TOP = 1.02;
+const ENV_BOTTOM = 0.46;
+
+/** Renders one page as an 8-bit grey PGM: { w, h, data }. */
+function renderPage(file, page) {
+    const buf = execFileSync(tool('pdftoppm'), ['-f', String(page), '-l', String(page), '-r', String(DPI), '-gray', '-singlefile', file], {
+        maxBuffer: 1 << 28,
+    });
+    // Header: "P5" w h maxval, separated by whitespace, then one byte per pixel.
+    let pos = 0;
+    const fields = [];
+    while (fields.length < 4) {
+        while (/\s/.test(String.fromCharCode(buf[pos]))) pos++;
+        let tok = '';
+        while (!/\s/.test(String.fromCharCode(buf[pos]))) tok += String.fromCharCode(buf[pos++]);
+        fields.push(tok);
+    }
+    pos++;
+    if (fields[0] !== 'P5' || +fields[3] !== 255) throw new Error(`Unexpected pdftoppm output for page ${page}`);
+    return { w: +fields[1], h: +fields[2], data: buf.subarray(pos) };
+}
+
+/**
+ * Sets each crop's top and bottom (PDF points from the top of the page) and the
+ * booklet-wide left and right. The search for each edge runs from the verse's
+ * outer line towards the neighbouring text line (or 3 em when there is none) and
+ * takes the nearest band of blank rows across [left, right] as the gap between
+ * them: the edge goes PAD points into that gap from the verse side, at most half
+ * way, so no ink of the verse is cut and none of the neighbour is shown.
+ */
+function resolveCrops(file, sections, pages) {
+    const crops = sections.flatMap((s) => s.blocks.filter((b) => b.t === 'crop'));
+    if (!crops.length) return { left: 0, right: 0, notes: [] };
+    const x0 = Math.min(...sections.map((s) => s._x[0]));
+    const x1 = Math.max(...sections.map((s) => s._x[1]));
+    const width = pages[0].width;
+    const left = Math.max(0, Math.floor(x0 - 8));
+    const right = Math.min(width, Math.ceil(x1 + 8));
+    const notes = [];
+    const envelope = []; // measured ink extents, returned for QA
+    const renders = new Map();
+    for (const c of crops) {
+        if (!renders.has(c.page)) renders.set(c.page, renderPage(file, c.page));
+        const img = renders.get(c.page);
+        const cx0 = Math.round(left * PX);
+        const cx1 = Math.min(img.w, Math.round(right * PX));
+        const blank = (row) => {
+            if (row < 0 || row >= img.h) return true;
+            const o = row * img.w;
+            for (let x = cx0; x < cx1; x++) if (img.data[o + x] < INK) return false;
+            return true;
+        };
+        const lines = c._lines.sort((a, b) => a.base - b.base);
+        const first = lines[0];
+        const last = lines.at(-1);
+        const pageLines = pages[c.page - 1].lines;
+        const above = pageLines.filter((l) => l.base < first.base - 0.6 * first.size).at(-1);
+        const below = pageLines.find((l) => l.base > last.base + 0.6 * last.size);
+        const height = pages[c.page - 1].height;
+
+        // Blank bands (runs of blank rows, at least MIN_GAP) between two pixel rows.
+        const bands = (from, to) => {
+            const out = [];
+            let start = null;
+            for (let r = from; r <= to; r++) {
+                const b = r < to && blank(r);
+                if (b && start === null) start = r;
+                if (!b && start !== null) {
+                    if (r - start >= MIN_GAP * PX) out.push({ start, end: r, len: r - start });
+                    start = null;
+                }
+            }
+            return out;
+        };
+
+        // Top: the band nearest the verse that lies above its matra zone (so the
+        // gap under an anusvara dot is not taken for the line gap), else the nearest.
+        const up = bands(
+            Math.max(0, Math.round((above ? above.base : first.base - 3 * first.size) * PX)),
+            Math.round((first.base - 0.35 * first.size) * PX),
+        ).reverse();
+        const g1 = up.find((g) => g.end <= (first.base - 0.9 * first.size) * PX) ?? up[0];
+        // Bottom: the first band below the verse's baseline.
+        const g2 = bands(
+            Math.round(last.base * PX),
+            Math.min(Math.round(height * PX), Math.round((below ? below.base - 0.35 * below.size : last.base + 3 * last.size) * PX)),
+        )[0];
+
+        // Lines set too tight for a blank band: cut at the least-inked row of the
+        // zone between the two lines (ties: nearest the middle of the zone), but
+        // never inside the verse's own ink envelope, so nothing of it is cut off.
+        const inkCount = (row) => {
+            const o = row * img.w;
+            let n = 0;
+            for (let x = cx0; x < cx1; x++) if (img.data[o + x] < INK) n++;
+            return n;
+        };
+        const valley = (z0, z1) => {
+            let [a, b] = [Math.round(Math.min(z0, z1) * PX), Math.round(Math.max(z0, z1) * PX)];
+            const mid = (a + b) / 2;
+            let best = null;
+            for (let r = a; r <= b; r++) {
+                const n = inkCount(r);
+                if (!best || n < best.n || (n === best.n && Math.abs(r - mid) < Math.abs(best.r - mid))) best = { r, n };
+            }
+            return best;
+        };
+
+        if (g1) envelope.push({ side: 'top', em: (first.base - g1.end / PX) / first.size, page: c.page });
+        if (g2) envelope.push({ side: 'bottom', em: (g2.start / PX - last.base) / last.size, page: c.page });
+        if (g1) c.top = (g1.end - Math.min(PAD * PX, g1.len / 2)) / PX;
+        else if (above) {
+            const v = valley(above.base + 0.15 * above.size, first.base - 0.75 * first.size);
+            c.top = Math.min(v.r / PX, first.base - ENV_TOP * first.size);
+            notes.push(`page ${c.page}: lines touch above the verse at ${first.base.toFixed(1)}; cut at ${c.top.toFixed(1)} (thinnest row ${(v.r / PX).toFixed(1)}, ${v.n} ink px)`);
+        } else c.top = first.base - 1.15 * first.size - PAD;
+        if (g2) c.bottom = (g2.start + Math.min(PAD * PX, g2.len / 2)) / PX;
+        else if (below) {
+            const v = valley(last.base + 0.2 * last.size, below.base - 0.75 * below.size);
+            c.bottom = Math.max((v.r + 1) / PX, last.base + ENV_BOTTOM * last.size);
+            notes.push(`page ${c.page}: lines touch below the verse at ${last.base.toFixed(1)}; cut at ${c.bottom.toFixed(1)} (thinnest row ${((v.r + 1) / PX).toFixed(1)}, ${v.n} ink px)`);
+        } else c.bottom = last.base + 0.55 * last.size + PAD;
+        c.top = Math.max(0, Math.floor(c.top * 2) / 2);
+        c.bottom = Math.min(height, Math.ceil(c.bottom * 2) / 2);
+        c.left = left;
+        c.right = right;
+        delete c._lines;
+    }
+    return { left, right, notes, envelope };
 }
 
 /* -------------------------------------------------------------------- entry */
@@ -667,14 +912,20 @@ function classify(elements, lang) {
  */
 export async function parse({ file, lang, paper = PAPER, source }) {
     if (lang !== 'en' && lang !== 'gu') throw new Error(`lang must be 'en' or 'gu', got ${lang}`);
-    const { elements } = await extract(file);
+    const { elements, pages } = await extract(file);
     const sections = classify(elements, lang);
+    const crops = resolveCrops(file, sections, pages);
+    for (const n of crops.notes) console.warn(`parse-subject-explanations: ${basename(file)}: ${n}`);
+    for (const sec of sections) delete sec._x;
 
     const ns = sections.map((s) => s.id);
     const expected = Array.from({ length: 17 }, (_, i) => `topic-${i + 1}`);
     if (ns.join() !== expected.join()) {
         throw new Error(`Expected topic-1 … topic-17 in ${file}, found: ${ns.join(', ')}`);
     }
+
+    const devanagari = JSON.stringify(sections).match(new RegExp(DEVANAGARI.source, 'gu'));
+    if (devanagari) throw new Error(`Devanagari left in the text of ${file}: ${devanagari.slice(0, 10).join(' ')}`);
 
     return {
         version: 1,

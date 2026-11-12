@@ -25,12 +25,40 @@ const BOOKLETS = [
     { paper: 'mukhpath', lang: 'gu', blob: 'Satsang Diksha Visharad Selected Mukhpath_Gujarati.pdf' },
     { paper: 'shlok-explanations', lang: 'gu', blob: 'Shloka Samjuti Gujarati.docx' },
     { paper: 'subject-explanations', lang: 'en', blob: 'Copy of Vishay Prastuti 1-17.pdf' },
-    { paper: 'subject-explanations', lang: 'gu', blob: 'Copy of વિષયપ્રસ્તુતિ ૧-૧૭.pdf' },
+    {
+        paper: 'subject-explanations',
+        lang: 'gu',
+        blob: 'Copy of વિષયપ્રસ્તુતિ ૧-૧૭.pdf',
+        // Words this PDF's text layer garbles (vowel signs on the wrong letter),
+        // checked against the printed page. A fix that no longer matches is reported.
+        fixes: [
+            ['મુમક્ષુ એુ', 'મુમુક્ષુએ'], // topic 3
+            ['પુરુષઓે', 'પુરુષોએ'], // topic 5
+            ['હતુાશનીનો', 'હુતાશનીનો'], // topic 7
+            ['મારંુ', 'મારું'], // topic 15
+        ],
+    },
     { paper: 'faq', lang: 'en', blob: 'FAQ_ENGLISH.pdf' },
 ];
 
 const BLOCK_TYPES = new Set(['h', 'p', 'list', 'quote', 'ref', 'html', 'crop']);
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Replaces `bad` with `good` in every text field of a booklet; returns how many were replaced. */
+function applyFix(booklet, bad, good) {
+    let n = 0;
+    const fix = (v) => (typeof v === 'string' && v.includes(bad) ? ((n += v.split(bad).length - 1), v.split(bad).join(good)) : v);
+    for (const g of booklet.groups)
+        for (const sec of g.sections) {
+            sec.title = fix(sec.title);
+            sec.subtitle = fix(sec.subtitle);
+            for (const b of sec.blocks) {
+                for (const k of ['text', 'cite', 'translation', 'html']) if (k in b) b[k] = fix(b[k]);
+                if (b.items) b.items = b.items.map(fix);
+            }
+        }
+    return n;
+}
 
 /** Returns a list of problems; empty means the booklet is usable. */
 function validate(b, expect) {
@@ -80,6 +108,10 @@ async function main() {
         try {
             const { parse } = await import(pathToFileURL(parserPath).href);
             const booklet = await parse({ file, lang: bk.lang, paper: bk.paper, source: bk.blob });
+            for (const [bad, good] of bk.fixes ?? []) {
+                const n = applyFix(booklet, bad, good);
+                if (!n) console.warn(`  ! ${name}: fix "${bad}" → "${good}" no longer matches`);
+            }
             const errs = validate(booklet, bk);
             if (errs.length) {
                 failed++;
