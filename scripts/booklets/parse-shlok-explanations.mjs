@@ -16,14 +16,21 @@
  * Text is never altered: paragraphs are copied from mammoth's output, with only
  * tags and attributes filtered.
  *
- * Usage: `await parse({ file, lang: 'gu', paper: 'shlok-explanations', source })`.
+ * The English booklet (Word .docx, `lang: 'en'`) has the same shape with different
+ * labels: bold "Quarter 1" … "Quarter 4" headings (also "Quarter-2", with stray
+ * spaces)  → groups; bold "Shlok 4" (sometimes "Shlok 19 ")  → sections; the
+ * transliterated Sanskrit verse in italics, closed by "(4)", then the meanings and
+ * references as bold/plain paragraphs, copied as sanitised HTML. There are no
+ * Amrut-font theme lines, so no `{ t: 'h' }` blocks. The front matter is one header image.
+ *
+ * Usage: `await parse({ file, lang: 'gu' | 'en', paper: 'shlok-explanations', source })`.
  * `parseWithReport` returns `{ booklet, report }` for QA (dropped front matter,
  * sanitiser counts, verse-number checks, warnings).
  */
 import path from 'node:path';
 import mammoth from 'mammoth';
 
-const BOOKLET_TITLE = 'શ્લોક સમજૂતી (ગુજરાતી)';
+const BOOKLET_TITLES = { gu: 'શ્લોક સમજૂતી (ગુજરાતી)', en: 'Shloka Samjuti (English)' };
 const THEME_STYLE = 'Shlok Samjuti Theme';
 const THEME_CLASS = 'shlok-theme';
 const THEME_FONT = 'Amrut';
@@ -41,6 +48,12 @@ const toGujarati = (n) => String(n).replace(/[0-9]/g, (d) => String.fromCharCode
 const SHLOK_RE = /^શ્લોક[\s \-‐-–]*([૦-૯0-9]+)$/u;
 /** "યુનિટ-૧". */
 const UNIT_RE = /^યુનિટ[\s \-‐-–]*([૦-૯0-9]+)$/u;
+/** English booklet: "Shlok 4", "Shlok 19 ". */
+const SHLOK_RE_EN = /^Shlok[\s\u00a0\-‐-–]*([0-9]+)$/iu;
+/** English booklet: "Quarter 1", "Quarter-2" (with leading spaces). */
+const QUARTER_RE_EN = /^Quarter[\s\u00a0\-‐-–]*([0-9]+)$/iu;
+/** The closing verse number of the English transliteration, e.g. "… arpayet. (1)". */
+const VERSE_NO_RE_EN = /\(\s*([0-9]+)\s*\)\s*$/u;
 /** The verse number that closes a Sanskrit shlok, e.g. "॥ १॥", "॥१०॥". */
 const VERSE_NO_RE = /॥\s*([०-९0-9]+)\s*॥\s*$/u;
 const DEVANAGARI_RE = /[ऀ-ॿ]/u;
@@ -257,16 +270,21 @@ function markThemeParagraphs(stats) {
 
 export async function parseWithReport({ file, lang = 'gu', paper = 'shlok-explanations', source } = {}) {
     if (!file) throw new Error('parse-shlok-explanations: `file` (path to the .docx) is required');
-    if (lang !== 'gu') throw new Error(`parse-shlok-explanations: this booklet is Gujarati only (got lang "${lang}")`);
+    if (lang !== 'gu' && lang !== 'en') throw new Error(`parse-shlok-explanations: lang must be "gu" or "en" (got "${lang}")`);
+    const en = lang === 'en';
+    const UNIT = en ? QUARTER_RE_EN : UNIT_RE;
+    const SHLOK = en ? SHLOK_RE_EN : SHLOK_RE;
+    const unitTitle = (n) => (en ? `Quarter ${n}` : `યુનિટ-${toGujarati(n)}`);
+    const groupId = (n) => (en ? `quarter-${n}` : `unit-${n}`);
 
     const stats = { themeParagraphs: 0, droppedTags: {}, droppedAttrs: {}, droppedImgs: 0 };
-    const result = await mammoth.convertToHtml(
-        { path: file },
-        {
-            styleMap: [`p[style-name='${THEME_STYLE}'] => h4.${THEME_CLASS}:fresh`],
-            transformDocument: markThemeParagraphs(stats),
-        },
-    );
+    const options = en
+        ? {}
+        : {
+              styleMap: [`p[style-name='${THEME_STYLE}'] => h4.${THEME_CLASS}:fresh`],
+              transformDocument: markThemeParagraphs(stats),
+          };
+    const result = await mammoth.convertToHtml({ path: file }, options);
 
     const nodes = toNodes(result.value, stats);
     const report = {
@@ -309,19 +327,19 @@ export async function parseWithReport({ file, lang = 'gu', paper = 'shlok-explan
             continue;
         }
 
-        const unit = node.tag === 'p' || node.tag === 'h4' ? UNIT_RE.exec(text) : null;
+        const unit = (node.tag === 'p' || node.tag === 'h4') && (!en || node.boldOnly) ? UNIT.exec(text) : null;
         if (unit) {
             flush();
             section = null;
             const n = Number(toWestern(unit[1]));
-            group = { id: `unit-${n}`, title: text, sections: [] };
+            group = { id: groupId(n), title: en ? unitTitle(n) : text, sections: [] };
             if (groups.some((g) => g.id === group.id)) report.warnings.push(`duplicate unit heading "${text}"`);
             groups.push(group);
             continue;
         }
 
-        const shlok = node.boldOnly ? SHLOK_RE.exec(text) : null;
-        if (!shlok && SHLOK_RE.test(text)) report.warnings.push(`paragraph "${text}" looks like a shlok heading but is not bold; kept as content`);
+        const shlok = node.boldOnly ? SHLOK.exec(text) : null;
+        if (!shlok && SHLOK.test(text)) report.warnings.push(`paragraph "${text}" looks like a shlok heading but is not bold; kept as content`);
         if (shlok) {
             flush();
             started = true;
@@ -337,7 +355,7 @@ export async function parseWithReport({ file, lang = 'gu', paper = 'shlok-explan
                 report.warnings.push(`duplicate shlok number ${n}; second copy gets id ${id}-${times}`);
                 id = `${id}-${times}`;
             }
-            section = { id, title: `શ્લોક ${toGujarati(n)}`, blocks: [], _nodes: [] };
+            section = { id, title: en ? `Shlok ${n}` : `શ્લોક ${toGujarati(n)}`, blocks: [], _nodes: [] };
             report.headings.push({ id, printed: node.text, title: section.title });
             group.sections.push(section);
             for (const p of pending) addContent(p), section._nodes.push(p);
@@ -378,13 +396,17 @@ export async function parseWithReport({ file, lang = 'gu', paper = 'shlok-explan
         for (const s of g.sections) {
             const lead = [];
             for (const n of s._nodes) {
-                if (!n.boldOnly || !DEVANAGARI_RE.test(n.text)) break;
+                // Gujarati: bold Devanagari lines. English: italic transliteration lines.
+                const isVerse = en
+                    ? /^<p><em>[\s\S]*<\/em><\/p>$/.test(n.html) || (lead.length === 0 && n.boldOnly && /^\(.*\)$/.test(n.text.trim())) // e.g. Shlok 19's bold "(Āshraya-dīkshā-mantra…)" label
+                    : n.boldOnly && DEVANAGARI_RE.test(n.text);
+                if (!isVerse) break;
                 lead.push(n.text.trim());
             }
             const first = lead.find((t) => !/^\(.*\)$/.test(t));
             if (first) s.subtitle = first;
             else report.warnings.push(`${s.id}: no Sanskrit verse found at the start`);
-            const closing = lead.map((t) => VERSE_NO_RE.exec(t)).filter(Boolean).at(-1);
+            const closing = lead.map((t) => (en ? VERSE_NO_RE_EN : VERSE_NO_RE).exec(t)).filter(Boolean).at(-1);
             const verse = closing ? Number(toWestern(closing[1])) : null;
             const heading = Number(s.id.replace(/^shlok-(\d+).*$/, '$1'));
             report.verseChecks.push({ id: s.id, verse, ok: verse === heading });
@@ -401,7 +423,7 @@ export async function parseWithReport({ file, lang = 'gu', paper = 'shlok-explan
         version: 1,
         paper,
         lang,
-        title: BOOKLET_TITLE,
+        title: BOOKLET_TITLES[lang],
         source: source || path.basename(file),
         generatedAt: new Date().toISOString(),
         groups,
