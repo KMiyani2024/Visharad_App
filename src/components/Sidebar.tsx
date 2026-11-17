@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Search, ChevronRight, FileQuestion, Home, Lock } from 'lucide-react';
+import { X, Search, ChevronRight, FileQuestion, Gamepad2, Home, Lock } from 'lucide-react';
 import { DharmaFlag } from './DharmaFlag';
 import { ProgressRing } from './ProgressRing';
 import { useClassProgress } from '@/lib/useClassProgress';
@@ -130,6 +130,27 @@ export function Sidebar({ classes, onLinkClick, onClose }: SidebarProps) {
                         />
                         <Home size={15} />
                         Home
+                    </Link>
+                )}
+
+                {!isSearching && (
+                    <Link
+                        href="/games"
+                        onClick={onLinkClick}
+                        className={`
+                            relative group/nav flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all mb-3
+                            ${pathname.startsWith('/games')
+                                ? 'bg-saffron-500/15 text-saffron-300'
+                                : 'text-charcoal-300 hover:bg-white/5 hover:text-white'
+                            }
+                        `}
+                    >
+                        <span
+                            aria-hidden="true"
+                            className={`absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-saffron-400 transition-all duration-200 ease-out ${pathname.startsWith('/games') ? 'h-4/5' : 'h-0 group-hover/nav:h-3/5'}`}
+                        />
+                        <Gamepad2 size={15} />
+                        Games
                     </Link>
                 )}
 
