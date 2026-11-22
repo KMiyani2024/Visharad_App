@@ -23,6 +23,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BOOKLETS = [
     { paper: 'mukhpath', lang: 'en', blob: 'Satsang Diksha Visharad Selected Mukhpath_English.pdf' },
     { paper: 'mukhpath', lang: 'gu', blob: 'Satsang Diksha Visharad Selected Mukhpath_Gujarati.pdf' },
+    { paper: 'shlok-explanations', lang: 'en', blob: 'Shloka Samjuti English.docx' },
     { paper: 'shlok-explanations', lang: 'gu', blob: 'Shloka Samjuti Gujarati.docx' },
     { paper: 'subject-explanations', lang: 'en', blob: 'Copy of Vishay Prastuti 1-17.pdf' },
     {

@@ -104,6 +104,7 @@ export const EXAM_PAPERS: ExamPaper[] = [
         assessed: "Any 4 shlok explanations, given in the student's own words and supported by the scriptural references.",
         marks: { count: 4, unit: 'shlok explanations', each: 5 },
         files: [
+            { lang: 'en', label: 'English', blob: 'Shloka Samjuti English.docx', format: 'docx' },
             { lang: 'gu', label: 'ગુજરાતી', blob: 'Shloka Samjuti Gujarati.docx', format: 'docx' },
         ],
     },
